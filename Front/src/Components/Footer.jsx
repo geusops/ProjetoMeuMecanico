@@ -6,7 +6,7 @@ import { FacebookIcon, Instagram, X, Youtube } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="bg-dark text-light py-4 mt-5 bg-slate-100 ">
+    <footer className="bg-dark text-light py-4 mt-5 bg-slate-100 border-t-2">
       <div className="text-center flex">
         {/* Logo meu mecanico e texto */}
         <div className="flex-col items-center px-6 w-2/5 bg-slate-100 rounded-lg p-6 m-6">

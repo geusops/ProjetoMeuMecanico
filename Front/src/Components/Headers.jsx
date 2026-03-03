@@ -29,11 +29,11 @@ export default function Headers() {
 
           {/* botoes */}
           <div className="ml-auto hidden md:flex items-center gap-3">
-            <button className="rounded-full px-4 py-2 text-sky-500 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
+            <button className="rounded-md px-4 py-2 text-sky-500 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
               Entrar
             </button>
 
-            <button className="rounded-full px-5 py-2 bg-sky-500 text-white shadow hover:bg-slate-700 transition">
+            <button className="rounded-md px-5 py-2 bg-sky-500 text-white shadow hover:bg-slate-700 transition">
               Cadastrar
             </button>
           </div>
