@@ -12,6 +12,7 @@ import oficina6 from "./assets/3.jpg";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import DetalhesOficina from "./Pages/DetalhesOficina";
 import Login from "./Pages/Login";
+import CadastrarUsuario from "./Pages/CadastrarUsuário";
 
 const oficinas = [
   {
@@ -103,6 +104,7 @@ function App() {
           element={<DetalhesOficina dados={oficinas} />}
         />
         <Route path="/login" element={<Login />} />
+        <Route path="/cadastro" element={<CadastrarUsuario />} />
       </Routes>
       <Footer />
     </BrowserRouter>

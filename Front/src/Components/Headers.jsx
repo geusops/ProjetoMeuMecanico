@@ -40,7 +40,7 @@ export default function Headers() {
             </button>
 
             <button className="rounded-md px-5 py-2 bg-sky-500 text-white shadow hover:bg-slate-700 transition">
-              Cadastrar
+              <Link to="/cadastro">Cadastrar</Link>
             </button>
           </div>
 
