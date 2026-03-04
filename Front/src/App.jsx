@@ -11,6 +11,7 @@ import oficina5 from "./assets/4.jpg";
 import oficina6 from "./assets/3.jpg";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import DetalhesOficina from "./Pages/DetalhesOficina";
+import Login from "./Pages/Login";
 
 const oficinas = [
   {
@@ -101,6 +102,7 @@ function App() {
           path="/oficinas/:id"
           element={<DetalhesOficina dados={oficinas} />}
         />
+        <Route path="/login" element={<Login />} />
       </Routes>
       <Footer />
     </BrowserRouter>
