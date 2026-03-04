@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   Star,
 } from "lucide-react";
-// import { useState } from "react";
+
 import oficina1 from "../assets/8.jpg";
 import oficina2 from "../assets/7.jpg";
 import oficina3 from "../assets/6.jpg";
