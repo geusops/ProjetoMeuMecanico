@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import logo from "../assets/logo-simples.png";
 import { useState } from "react";
 
@@ -20,8 +21,13 @@ export default function Headers() {
 
             {/* Menus */}
             <ul className="hidden md:flex items-center gap-4 text-gray-600 text-md">
-              <li className="hover:text-sky-500 cursor-pointer">Início</li>
-              <li className="hover:text-sky-500 cursor-pointer">Oficinas</li>
+              <li className="hover:text-sky-500 cursor-pointer">
+                {/* aqui eu configurou o mapeamento das paginas */}
+                <Link to="/">Início</Link>
+              </li>
+              <li className="hover:text-sky-500 cursor-pointer">
+                <Link to="/oficinas">Oficinas</Link>
+              </li>
               <li className="hover:text-sky-500 cursor-pointer">Serviços</li>
               <li className="hover:text-sky-500 cursor-pointer">Contato</li>
             </ul>

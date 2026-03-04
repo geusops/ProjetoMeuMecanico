@@ -6,9 +6,10 @@ import {
   MapPin,
   Wrench,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 //import oficinas from "../App.jsx";
 
-function Oficinas({ oficinas }) {
+function Oficinas(props) {
   return (
     // div principal
     <div className="flex">
@@ -187,7 +188,8 @@ function Oficinas({ oficinas }) {
           <ul className="rounded-md grid grid-cols-3">
             {/* usei o chatgpt para me explicar o mapeamento oficinas e renderizar cada oficina dentro de um li
           referencia https://react.dev/learn/rendering-lists*/}
-            {oficinas.map((oficina) => (
+            {/* adicionei tbm a validacao de props pois vscode estava reclamado */}
+            {props.oficinas.map((oficina) => (
               <li className="p-4" key={oficina.id}>
                 <div className="shadow-md">
                   {/* componentes */}
@@ -211,9 +213,15 @@ function Oficinas({ oficinas }) {
                         {oficina.especialidade}
                       </p>
                     </div>
-                    <button className="flex justify-between border-2 w-full text-left text-gray-700 font-bold p-2 hover:bg-slate-700 hover:text-white">
-                      Ver Detalhes
-                      <ChevronRight />
+                    <button className="border-2 w-full text-left text-gray-700 font-bold p-2 hover:bg-slate-700 hover:text-white">
+                      <Link
+                        className="flex justify-between"
+                        to={`/oficinas/${oficina.id}`}
+                      >
+                        {" "}
+                        Ver Detalhes
+                        <ChevronRight />
+                      </Link>
                     </button>
                   </div>
                   <div className="flex p-4 pt-0 gap-2">
@@ -238,7 +246,7 @@ function Oficinas({ oficinas }) {
         <div className="bg-sky-50 flex h-15 gap-2 rounded-lg py-2 px-2 justify-between m-4 border-dashed border-gray-200 border-2">
           {/* div icone e text */}
           <div className="flex">
-            {/* botal */}
+            {/* botao */}
             <div className="w-32 flex items-center justify-center">
               <Wrench
                 size={86}

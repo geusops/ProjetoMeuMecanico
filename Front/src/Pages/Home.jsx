@@ -67,7 +67,6 @@ const oficinas = [
     especialidade: "Diagnóstico eletrônico",
   },
 ];
-
 function HomePage() {
   return (
     <div>
