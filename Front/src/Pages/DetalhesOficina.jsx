@@ -15,7 +15,7 @@ import { Link, useParams } from "react-router-dom";
 function DetalhesOficina({ dados }) {
   const { id } = useParams();
 
-  const oficinaSelecionada = dados.find((of) => of.id === parseInt(id));
+  const oficinaSelecionada = dados.find((of) => of.id_oficina === parseInt(id));
   console.log({ oficinaSelecionada });
   if (!oficinaSelecionada) {
     return <h2>Oficina não encontrada</h2>;
@@ -49,7 +49,7 @@ function DetalhesOficina({ dados }) {
         <div className="pt-4 rounded-md">
           <img
             className="w-full rounded-t-lg"
-            src={oficinaSelecionada.imagem}
+            src={`http://localhost:3000${oficinaSelecionada.foto_path}`}
             alt={oficinaSelecionada.nome}
           />
         </div>

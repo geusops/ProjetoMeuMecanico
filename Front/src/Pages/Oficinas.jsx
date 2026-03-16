@@ -7,7 +7,6 @@ import {
   Wrench,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-//import oficinas from "../App.jsx";
 
 function Oficinas(props) {
   return (
@@ -190,12 +189,12 @@ function Oficinas(props) {
           referencia https://react.dev/learn/rendering-lists*/}
             {/* adicionei tbm a validacao de props pois vscode estava reclamado */}
             {props.oficinas.map((oficina) => (
-              <li className="p-4" key={oficina.id}>
+              <li className="p-4" key={oficina.id_oficina}>
                 <div className="shadow-md">
                   {/* componentes */}
                   <img
                     className="w-full rounded-t-lg"
-                    src={oficina.imagem}
+                    src={`http://localhost:3000${oficina.foto_path}`}
                     alt={oficina.nome}
                   />
                   <div className="p-4">
@@ -216,7 +215,7 @@ function Oficinas(props) {
                     <button className="border-2 w-full text-left text-gray-700 font-bold p-2 hover:bg-slate-700 hover:text-white">
                       <Link
                         className="flex justify-between"
-                        to={`/oficinas/${oficina.id}`}
+                        to={`/oficinas/${oficina.id_oficina}`}
                       >
                         {" "}
                         Ver Detalhes

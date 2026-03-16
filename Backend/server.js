@@ -1,8 +1,12 @@
 import express from "express";
 import mysql from "mysql";
 import cors from "cors";
+import path from "path";
 
 const app = express();
+
+//usando o chatgpt para descobrir como export o diretorio uploads para que o react consiga renderizar a imagem.
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 //https://expressjs.com/en/resources/middleware/cors.html
 app.use(cors());
@@ -11,7 +15,6 @@ app.use(cors());
 // Banco de dados
 //
 //
-
 //referencia https://www.w3schools.com/nodejs/nodejs_mysql.asp
 //configuração para conexao no banco de dados
 let con = mysql.createConnection({
