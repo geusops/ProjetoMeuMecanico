@@ -1,3 +1,4 @@
+//Modificado por Khenny
 import {
   ChevronRight,
   Clock,
@@ -9,11 +10,11 @@ import {
   ShieldCheck,
   Star,
 } from "lucide-react";
+import { Link } from "react-router-dom"; // ← adicionado esta linha
 
 function HomePage(props) {
   // tentando conectar a API nodejs
   //referencia: https://www.youtube.com/watch?v=mKmxc8TcWQ8
-
   return (
     <div>
       {/* bloco azul */}
@@ -74,6 +75,23 @@ function HomePage(props) {
               <p>Agendamento Fácil</p>
             </div>
           </div>
+
+          {/* Div para container dos benefícios */}
+          <div className="flex justify-center p-6 gap-10 text-gray-700 text-lg">
+            {/* ... os 3 benefícios ... */}
+          </div>
+
+          {/* Botão Meu Perfil - adicionado aqui */}
+          <div className="flex justify-center mt-6">
+            <Link to="/perfil">
+              {/* <button
+                className="flex items-center gap-2 px-8 py-4 bg-sky-500 text-white font-semibold text-xl rounded-lg shadow-lg hover:bg-sky-600 transition transform hover:scale-105"
+              >
+                <span>Meu Perfil</span>
+                <Star className="w-6 h-6" />  
+              </button>  */}
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -130,9 +148,15 @@ function HomePage(props) {
                       {oficina.especialidade}
                     </p>
                   </div>
-                  <button className="flex justify-between border-2 w-full text-left text-gray-700 font-bold p-2 hover:bg-slate-700 hover:text-white">
-                    Ver Detalhes
-                    <ChevronRight />
+                  <button className="border-2 w-full text-left text-gray-700 font-bold p-2 hover:bg-slate-700 hover:text-white">
+                    <Link
+                      className="flex justify-between"
+                      to={`/oficinas/${oficina.id_oficina}`}
+                    >
+                      {" "}
+                      Ver Detalhes
+                      <ChevronRight />
+                    </Link>
                   </button>
                 </div>
                 <div className="flex p-4 pt-0 gap-2">

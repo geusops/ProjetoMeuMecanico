@@ -1,86 +1,131 @@
-import { ArrowLeft, Lock, Mail } from "lucide-react";
-import { Link } from "react-router-dom";
-import logo from "../assets/logo-simples.png";
+//Modificado por Khenny
 
-function Login() {
+// Importa ferramentas do React para controlar dados e usar contexto
+import { useState, useContext } from "react";
+
+// Importa ferramentas para navegar entre páginas e criar links internos
+import { useNavigate, Link } from "react-router-dom";
+
+// Importa o contexto de autenticação (onde fica o login do usuário)
+import { AuthContext } from "../context/AuthContext";
+
+export default function Login() {
+  // Guarda os dados digitados no formulário
+  const [form, setForm] = useState({ email: "", senha: "" });
+
+  // Guarda mensagens de erro
+  const [erro, setErro] = useState("");
+
+  // Pega a função de login do contexto
+  const { login } = useContext(AuthContext);
+
+  // Permite redirecionar o usuário para outra página
+  const navigate = useNavigate();
+
+  // Função chamada quando o usuário digita nos campos
+  const handleChange = (e) => {
+    // Atualiza o valor do campo que foi alterado
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // Função executada quando o formulário é enviado
+  const handleSubmit = (e) => {
+    // Impede o recarregamento da página
+    e.preventDefault();
+
+    // Limpa mensagens de erro antigas
+    setErro("");
+
+    // Verifica se email ou senha estão vazios
+    if (!form.email || !form.senha) {
+      setErro("Preencha email e senha.");
+      return;
+    }
+
+    // Simulação de um usuário logado (no futuro virá do backend)
+    const usuarioSimulado = {
+      id: Date.now(), // gera um id simples
+      nome: "Usuário Teste",
+      email: form.email,
+    };
+
+    // Chama a função login e salva o usuário
+    login(usuarioSimulado);
+
+    // Redireciona para a página de perfil
+    navigate("/perfil");
+  };
+
   return (
-    <div>
-      {/* botao de voltar */}
-      <div className="p-6 ">
-        <div className="text-gray-700 mb-10">
-          <Link className="flex gap-6" to="/">
-            <ArrowLeft />
-            <p>Voltar para a página inicial</p>
-          </Link>
-        </div>
-      </div>
-      <div className="ml-96 mr-96 pl-36 pr-36">
-        {/* logo e descricao */}
-        <div className="pt-6 shadow">
-          <div className="justify-items-center">
-            <a className="flex gap-2">
-              <img src={logo} alt="Logo Meu Mecânico" className="h-10 w-auto" />
-              <span className="font-bold text-4xl text-sky-500">
-                Meu Mecânico
-              </span>
-            </a>
-            <p className=" text-gray-600 text-center text-lg mr-32 ml-32 m-2">
-              Sua plataforma de confiança para manutenção automotiva
-            </p>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
+      {/* Caixa central do formulário */}
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-10">
+        {/* Título da página */}
+        <h1 className="text-3xl font-bold text-sky-700 mb-8 text-center">
+          Entrar na conta
+        </h1>
+
+        {/* Mostra mensagem de erro caso exista */}
+        {erro && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            {erro}
+          </div>
+        )}
+
+        {/* Formulário de login */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Campo de email */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              placeholder="seu@email.com"
+              required
+            />
           </div>
 
-          {/* bem vindo */}
-          <div className="p-4 border-t-2 pt-8">
-            <h2 className="text-2xl text-black font-bold text-left">
-              Bem-vindo de volta
-            </h2>
-            <p className="text-gray-600 text-lg text-left">
-              Insira suas credenciais para acessar sua conta.
-            </p>
+          {/* Campo de senha */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Senha
+            </label>
+            <input
+              type="password"
+              name="senha"
+              value={form.senha}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              placeholder="••••••••"
+              required
+            />
           </div>
-          {/* formulario login*/}
-          <div className="p-4 m-2">
-            {/* email */}
-            <div className="">
-              <p className="text-gray-600 text-lg text-left">E-mail</p>
-              <div className="flex gap-2 bg-slate-50 border p-2 mt-2">
-                <Mail className="text-gray-600" />
-                <input
-                  type="text"
-                  placeholder="seu@email.com"
-                  className="bg-slate-50"
-                />
-              </div>
-            </div>
-            {/* senha */}
-            <div className="pt-2">
-              <div className="flex gap-2 justify-between">
-                <p className="text-gray-600 text-lg text-left">Senha</p>
-                <p className="text-sky-500 text-md text-left">
-                  Esqueceu a senha?
-                </p>
-              </div>
-              <div className="flex gap-2 bg-slate-50 border p-2 mt-2">
-                <Lock className="text-gray-600" />
-                <input type="password" className="bg-slate-50" />
-              </div>
-            </div>
-            {/* lembrar dispositivo */}
-            <div className="pt-4 flex gap-2">
-              <input type="checkbox" className="text-2xl" />
-              <p className="font-bold">Lembrar dispositivo</p>
-            </div>
-            {/* botao entrar */}
-            <div className="justify-items-center p-8">
-              <button className="flex gap-2 items-center rounded-md text-lg bg-sky-500 px-32 h-10 text-sky-50 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
-                Entrar na Conta
-              </button>
-            </div>
-          </div>
-        </div>
-        <div></div>
+
+          {/* Botão para enviar o formulário */}
+          <button
+            type="submit"
+            className="w-full bg-sky-600 text-white py-3 rounded-lg font-semibold hover:bg-sky-700 transition shadow-md"
+          >
+            Entrar
+          </button>
+        </form>
+
+        {/* Link para página de cadastro */}
+        <p className="text-center text-gray-600 mt-6">
+          Ainda não tem conta?{" "}
+          <Link
+            to="/cadastro"
+            className="text-sky-600 hover:underline font-medium"
+          >
+            Cadastrar agora
+          </Link>
+        </p>
       </div>
     </div>
   );
 }
-export default Login;

@@ -1,13 +1,15 @@
+//Modificado por Khenny
 import Headers from "./Components/Headers";
 import Footer from "./Components/Footer";
 import HomePage from "./Pages/home";
 import Oficinas from "./Pages/Oficinas";
-import axios from "axios";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import DetalhesOficina from "./Pages/DetalhesOficina";
 import Login from "./Pages/Login";
 import CadastrarUsuario from "./Pages/CadastrarUsuário";
-import { useState, useEffect } from "react";
+import Perfil from "./Pages/Perfil"; // ← acrescente esta linha
+import { useState, useEffect } from "react"; //conexao com a API node
+import axios from "axios"; //conexao com a API node
 
 function App() {
   // consumindo a api node para ler as infos do banco
@@ -22,6 +24,7 @@ function App() {
   useEffect(() => {
     fetchAPI();
   }, []);
+
   return (
     // colocando a aplicacao debaixo do chapeu do browser router
     <BrowserRouter>
@@ -37,6 +40,7 @@ function App() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<CadastrarUsuario />} />
+        <Route path="/perfil" element={<Perfil />} />
       </Routes>
       <Footer />
     </BrowserRouter>
