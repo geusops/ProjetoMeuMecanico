@@ -10,6 +10,7 @@ import { ArrowLeft, Lock, Mail, User, Wrench } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 // Importa a imagem da logo do projeto
 import logo from "../assets/logo-simples.png";
+import axios from "axios";
 
 // Função que representa a página de cadastro
 export default function CadastrarUsuario() {
@@ -46,9 +47,10 @@ export default function CadastrarUsuario() {
       tipo: prev.tipo === "cliente" ? "mecanico" : "cliente",
     }));
   };
-
-  // Executa quando o usuário envia o formulário
-  const handleSubmit = (e) => {
+  //
+  // Envio dos dados do formulario para o backend
+  //
+  const handleSubmit = async (e) => {
     e.preventDefault(); // evita recarregar a página
     setErro(""); // limpa erros antigos
 
@@ -57,7 +59,6 @@ export default function CadastrarUsuario() {
       setErro("Preencha todos os campos obrigatórios.");
       return;
     }
-
     // Verifica se as duas senhas são iguais
     if (form.senha !== form.confirmarSenha) {
       setErro("As senhas não coincidem.");
@@ -69,20 +70,30 @@ export default function CadastrarUsuario() {
       setErro("A senha deve ter pelo menos 6 caracteres.");
       return;
     }
-    // Simulação de cadastro (prototipo do TCC)
-    const novoUsuario = {
-      id: Date.now(), // cria um ID simples
-      nome: form.nome,
-      telefone: form.telefone,
-      email: form.email,
-      // Em um sistema real a senha seria enviada para o backend
-    };
+    //removendo o confirmar senha antes de mandar pro banco criando o objeto usuario
+    const { confirmarSenha, ...usuario } = form;
 
-    // Faz login automaticamente após cadastro
-    login(novoUsuario);
+    // envido o
+    //https://salma-mohamed.medium.com/post-and-get-requests-on-both-reactjs-and-nodejs-part-1-basics-ddf9d6f219ff
+    try {
+      //chamada envio para o backend via post no endpoit usarios
+      const respPost = await axios.post(
+        "http://localhost:3000/usuarios",
+        usuario,
+      );
 
-    // Redireciona o usuário para a página de perfil
-    navigate("/perfil");
+      // Faz login automaticamente após cadastro
+      login(respPost.data);
+      //envia o usuario para o perfil dele
+      navigate("/perfil");
+    } catch (err) {
+      console.error(err);
+      if (err.response?.data?.error === "Email já cadastrado") {
+        setErro("Este email já está em uso.");
+      } else {
+        setErro("Erro ao cadastrar usuário.");
+      }
+    }
   };
 
   return (
