@@ -34,7 +34,7 @@ function Oficinas(props) {
             </div>
             <div className="pb-1">
               <input type="checkbox" id="freios" />
-              <label htmlFor="freios"> Freios de Suspensão</label>
+              <label htmlFor="freios"> Freios e Suspensão</label>
             </div>
             <div className="pb-1">
               <input type="checkbox" id="eletrica" />
@@ -42,7 +42,7 @@ function Oficinas(props) {
             </div>
             <div className="pb-1">
               <input type="checkbox" id="ar" />
-              <label htmlFor="ar"> Ar Condicionado</label>
+              <label htmlFor="ar"> Ar-Condicionado</label>
             </div>
             <div className="pb-1">
               <input type="checkbox" id="pneus" />

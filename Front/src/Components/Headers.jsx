@@ -42,7 +42,7 @@ export default function Headers() {
         <div className="w-full flex items-center h-20 px-6 md:px-20">
           {/* Logo e nome do sistema */}
           <div className="flex items-center gap-6">
-            <Link to="/" className="flex items-center gap-2">
+            <Link to="/home" className="flex items-center gap-2">
               <img src={logo} alt="Logo Meu Mecânico" className="h-10 w-auto" />
               <span className="font-bold text-xl text-sky-500">
                 Meu Mecânico
@@ -52,7 +52,7 @@ export default function Headers() {
             {/* Menu principal para telas grandes */}
             <ul className="hidden md:flex items-center gap-6 text-gray-600 text-md">
               <li className="hover:text-sky-500 transition">
-                <Link to="/">Início</Link>
+                <Link to="/home">Início</Link>
               </li>
               <li className="hover:text-sky-500 transition">
                 <Link to="/oficinas">Oficinas</Link>
@@ -130,7 +130,7 @@ export default function Headers() {
             <ul className="flex flex-col p-5 gap-4 text-gray-700 text-base">
               {/* Links principais */}
               <li>
-                <Link to="/" onClick={() => setNav(false)}>
+                <Link to="/home" onClick={() => setNav(false)}>
                   Início
                 </Link>
               </li>

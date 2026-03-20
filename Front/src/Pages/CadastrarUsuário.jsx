@@ -101,7 +101,7 @@ export default function CadastrarUsuario() {
       {/* Botão para voltar para a página inicial */}
       <div className="p-6">
         <Link
-          to="/"
+          to="/home"
           className="flex items-center gap-2 text-gray-700 hover:text-sky-600"
         >
           <ArrowLeft size={20} />
