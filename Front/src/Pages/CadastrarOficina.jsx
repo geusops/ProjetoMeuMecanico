@@ -4,7 +4,6 @@ import {
   StoreIcon,
   WrenchIcon,
   ArrowLeft,
-  Check,
   CircleCheck,
 } from "lucide-react";
 import { useState } from "react";
@@ -14,6 +13,57 @@ function CadastrarOfina() {
   // checa qual botao esta ativo
   const [ativo, setAtivo] = useState("minha_oficina");
   console.log(ativo);
+
+  //para usar a api da via cep, criei esse objeto para armazenar os dados do endereco e setar o conteudo os campos
+  const [endereco, setEndereco] = useState({
+    cep: "",
+    rua: "lalala",
+    numero: "",
+    complemento: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
+  });
+
+  //referencia:
+  //https://www.youtube.com/watch?v=155ywtYSpdY
+  const consultaCEP = (e) => {
+    const cep = e.target.value.replace(/\D/g, "");
+    console.log(cep);
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      .then((res) => res.json())
+      .then((data) => {
+        setEndereco({
+          ...endereco,
+          rua: data.logradouro || "",
+          bairro: data.bairro || "",
+          cidade: data.localidade || "",
+          estado: data.uf || "",
+        });
+      });
+  };
+
+  //usando o botao para limpar os campos autopreenchidos
+  const limparEndereco = () => {
+    setEndereco({
+      ...endereco,
+      cep: "",
+      rua: "",
+      bairro: "",
+      cidade: "",
+      estado: "",
+    });
+  };
+
+  //IA ajudou aqui. Para permitir que o usuario digite os campos
+  //Sem isso o campo ficava travado com o valor ou da api ou vazio
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setEndereco((prev) => ({
+      ...prev, // Mantém o que já estava preenchido
+      [name]: value, // Atualiza apenas o campo que mudou (ex: 'rua', 'cidade')
+    }));
+  };
 
   return (
     <div className="flex">
@@ -333,14 +383,20 @@ function CadastrarOfina() {
                         <div className="text-gray-500 flex gap-2">
                           <input
                             type="text"
-                            name="nome"
+                            name="cep"
                             placeholder="00000-000"
+                            onBlur={consultaCEP}
+                            onChange={handleChange}
+                            value={endereco.cep}
                             className="w-full px-4 py-3 bg-slate-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                             required
                           />
                           {/* botao */}
-                          <button className="text-gray-700 bg-slate-200 rounded-md p-2">
-                            Buscar
+                          <button
+                            onClick={limparEndereco}
+                            className="text-gray-700 bg-slate-200 rounded-md p-2"
+                          >
+                            Limpar
                           </button>
                         </div>
                       </div>
@@ -357,6 +413,8 @@ function CadastrarOfina() {
                             type="text"
                             name="rua"
                             placeholder="Rua das Peças"
+                            value={endereco.rua}
+                            onChange={handleChange}
                             className="w-full px-4 py-3 bg-slate-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                             required
                           />
@@ -407,6 +465,8 @@ function CadastrarOfina() {
                           <input
                             type="text"
                             name="bairro"
+                            value={endereco.bairro}
+                            onChange={handleChange}
                             placeholder="Centro"
                             className="w-full px-4 py-3 bg-slate-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                             required
@@ -425,6 +485,8 @@ function CadastrarOfina() {
                           <input
                             type="text"
                             name="cidade"
+                            value={endereco.cidade}
+                            onChange={handleChange}
                             placeholder="São Paulo"
                             className="w-full px-4 py-3 bg-slate-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                             required
@@ -444,6 +506,8 @@ function CadastrarOfina() {
                             type="text"
                             name="estado"
                             placeholder="SP"
+                            value={endereco.estado}
+                            onChange={handleChange}
                             className="w-full px-4 py-3 bg-slate-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                             required
                           />
