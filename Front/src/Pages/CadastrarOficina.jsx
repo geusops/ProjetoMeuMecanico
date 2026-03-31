@@ -17,7 +17,7 @@ function CadastrarOfina() {
   //para usar a api da via cep, criei esse objeto para armazenar os dados do endereco e setar o conteudo os campos
   const [endereco, setEndereco] = useState({
     cep: "",
-    rua: "lalala",
+    rua: "",
     numero: "",
     complemento: "",
     bairro: "",
