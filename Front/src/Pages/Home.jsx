@@ -11,14 +11,21 @@ import {
   Star,
 } from "lucide-react";
 import { Link } from "react-router-dom"; // ← adicionado esta linha
+import { MapContainer, TileLayer, Popup, Marker } from "react-leaflet"; //trabalhanodo com os mapas
+import "leaflet/dist/leaflet.css"; //estilo do mapa
+
+import { useState } from "react"; // usado para o "toggle"
 
 function HomePage(props) {
+  const [visualizacao, setVisualizacao] = useState("lista"); // visualizacao padrao é a lista
+  const position = [-23.541, -46.456];
+
   // tentando conectar a API nodejs
   //referencia: https://www.youtube.com/watch?v=mKmxc8TcWQ8
   return (
     <div>
       {/* bloco azul */}
-      <div className="w-screen p-20 flex bg-sky-100 items-center justify-center">
+      <div className="w-full p-20 flex bg-sky-100 items-center justify-center">
         <div className="w-[1000px] space-y-4">
           {/* inicio blocos de texto */}
           <div className="flex justify-center">
@@ -96,7 +103,7 @@ function HomePage(props) {
       </div>
 
       {/* bloco intermediario */}
-      <div className="w-screen p-10 flex items-center border-b-2 border-t-2 justify-between pr-20 pl-20">
+      <div className="w-full p-10 flex items-center border-b-2 border-t-2 justify-between pr-20 pl-20">
         <div>
           <h2 className="text-3xl text-black font-bold text-left">
             Oficinas Próximas
@@ -108,11 +115,25 @@ function HomePage(props) {
 
         {/* botoes */}
         <div className="flex gap-2 w-2/5 justify-end">
-          <button className="flex gap-5 rounded-sm px-5 py-2 text-gray-700 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
+          <button
+            onClick={() => setVisualizacao("lista")}
+            className={`flex gap-5 rounded-sm px-5 py-2 transition shadow ${
+              visualizacao === "lista"
+                ? "bg-sky-500 text-white"
+                : "text-gray-700 border border-transparent hover:bg-slate-700 hover:text-white"
+            }`}
+          >
             <Grid2X2 />
             Lista
           </button>
-          <button className="flex gap-5 rounded-sm px-5 py-2 bg-sky-500 text-white shadow hover:bg-slate-700 transition">
+          <button
+            onClick={() => setVisualizacao("mapa")}
+            className={`flex gap-5 rounded-sm px-5 py-2 transition shadow ${
+              visualizacao === "mapa"
+                ? "bg-sky-500 text-white"
+                : "text-gray-700 border border-transparent hover:bg-slate-700 hover:text-white"
+            }`}
+          >
             <Map />
             Mapa
           </button>
@@ -121,52 +142,73 @@ function HomePage(props) {
 
       {/* bloco grid de oficinas */}
       <div className="">
-        <ul className="rounded-md grid grid-cols-3 p-12">
-          {/* usei o chatgpt para me explicar o mapeamento oficinas e renderizar cada oficina dentro de um li
-          referencia https://react.dev/learn/rendering-lists*/}
-          {props.oficinas.map((oficina) => (
-            <li className="p-4" key={oficina.id_oficina}>
-              <div className="shadow-md">
-                {/* componentes */}
-                <img
-                  className="w-full rounded-t-lg"
-                  src={`http://localhost:3000${oficina.foto_path}`}
-                  alt={oficina.nome}
-                />
-                <div className="p-4">
-                  <h2 className="text-2xl text-black font-bold text-left p-2">
-                    {oficina.nome}
-                  </h2>
+        {/* bloco de mapas - aparece quando o botao mapa é clicado */}
+        {visualizacao === "mapa" && (
+          <div className="h-96 w-full p-12">
+            <MapContainer
+              center={position}
+              zoom={13}
+              scrollWheelZoom={false}
+              style={{ height: "100%", width: "100%" }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Marker position={position}>
+                <Popup>Sua oficina está aqui!</Popup>
+              </Marker>
+            </MapContainer>
+          </div>
+        )}
 
-                  <div className="flex gap-1 p-2 text-gray-700">
-                    <MapPin />
-                    <p>{oficina.endereco}</p>
-                  </div>
+        {/* bloco de lista - aparece quando o botao lista é clicado */}
+        {visualizacao === "lista" && (
+          <ul className="rounded-md grid grid-cols-3 p-12">
+            {props.oficinas.map((oficina) => (
+              <li className="p-4" key={oficina.id_oficina}>
+                <div className="shadow-md">
+                  {/* componentes */}
+                  <img
+                    className="w-full rounded-t-lg"
+                    src={`http://localhost:3000${oficina.foto_path}`}
+                    alt={oficina.nome}
+                  />
+                  <div className="p-4">
+                    <h2 className="text-2xl text-black font-bold text-left p-2">
+                      {oficina.nome}
+                    </h2>
 
-                  <div className="flex p-1 pb-2">
-                    <p className="bg-slate-200 rounded-full p-2 border-0">
-                      {oficina.especialidade}
-                    </p>
+                    <div className="flex gap-1 p-2 text-gray-700">
+                      <MapPin />
+                      <p>{oficina.endereco}</p>
+                    </div>
+
+                    <div className="flex p-1 pb-2">
+                      <p className="bg-slate-200 rounded-full p-2 border-0">
+                        {oficina.especialidade}
+                      </p>
+                    </div>
+                    <button className="border-2 w-full text-left text-gray-700 font-bold p-2 hover:bg-slate-700 hover:text-white">
+                      <Link
+                        className="flex justify-between"
+                        to={`/oficinas/${oficina.id_oficina}`}
+                      >
+                        {" "}
+                        Ver Detalhes
+                        <ChevronRight />
+                      </Link>
+                    </button>
                   </div>
-                  <button className="border-2 w-full text-left text-gray-700 font-bold p-2 hover:bg-slate-700 hover:text-white">
-                    <Link
-                      className="flex justify-between"
-                      to={`/oficinas/${oficina.id_oficina}`}
-                    >
-                      {" "}
-                      Ver Detalhes
-                      <ChevronRight />
-                    </Link>
-                  </button>
+                  <div className="flex p-4 pt-0 gap-2">
+                    <Star />
+                    <p>{oficina.avaliacao}</p>
+                  </div>
                 </div>
-                <div className="flex p-4 pt-0 gap-2">
-                  <Star />
-                  <p>{oficina.avaliacao}</p>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       {/* bloco convite ao cadastro */}
       <div className="bg-sky-500 flex h-15 gap-2 rounded-lg shadow py-2 px-2 justify-between m-12 border-b-2">
