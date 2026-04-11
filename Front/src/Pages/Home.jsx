@@ -15,10 +15,26 @@ import { MapContainer, TileLayer, Popup, Marker } from "react-leaflet"; //trabal
 import "leaflet/dist/leaflet.css"; //estilo do mapa
 
 import { useState } from "react"; // usado para o "toggle"
+import Location from "../Hooks/Location";
 
 function HomePage(props) {
   const [visualizacao, setVisualizacao] = useState("lista"); // visualizacao padrao é a lista
-  const position = [-23.541, -46.456];
+
+  //bloco para lidar com a localizacao
+  //referencia: https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API/Using_the_Geolocation_API
+  //1. achar localizacao do usuario
+  const { coords, buscaLocalizacao, pesquisarEndereco } = Location();
+  //vinculando com o caixa de texto para a busca
+  const [textoBusca, setTextoBusca] = useState("");
+
+  //2. funcao para dar o trigger de buscar a localizao ao clicar no botao
+  const handleLocalizacao = () => {
+    buscaLocalizacao(); // Isso faz o navegador pedir permissão e escrever no console
+  };
+
+  //https://giuliacajati.medium.com/all-about-openstreetmap-using-react-js-c24fd0856aca
+  //3. posicao default - São Paulo
+  const position = coords ? [coords.lat, coords.lon] : [-23.541, -46.456];
 
   // tentando conectar a API nodejs
   //referencia: https://www.youtube.com/watch?v=mKmxc8TcWQ8
@@ -52,15 +68,23 @@ function HomePage(props) {
                 className="text-gray-700 w-full bg-slate-50"
                 type="text"
                 placeholder="Cidade, bairro ou CEP..."
+                value={textoBusca}
+                onChange={(e) => setTextoBusca(e.target.value)}
               />
             </div>
             {/* botoes */}
             <div className="flex gap-2 w-2/5 justify-end">
-              <button className="flex gap-5 rounded-sm px-5 py-2 text-gray-700 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
+              <button
+                className="flex gap-5 rounded-sm px-5 py-2 text-gray-700 border border-transparent shadow hover:bg-slate-700 hover:text-white transition"
+                onClick={handleLocalizacao}
+              >
                 <Navigation />
                 Localização Atual
               </button>
-              <button className="flex gap-5 rounded-sm px-5 py-2 bg-sky-500 text-white shadow hover:bg-slate-700 transition">
+              <button
+                onClick={() => pesquisarEndereco(textoBusca)} // Dispara a pesquisa
+                className="flex gap-5 rounded-sm px-5 py-2 bg-sky-500 text-white shadow hover:bg-slate-700 transition"
+              >
                 <Search />
                 Buscar
               </button>
@@ -144,10 +168,14 @@ function HomePage(props) {
       <div className="">
         {/* bloco de mapas - aparece quando o botao mapa é clicado */}
         {visualizacao === "mapa" && (
-          <div className="h-96 w-full p-12">
+          // referencia mapa https://giuliacajati.medium.com/all-about-openstreetmap-using-react-js-c24fd0856aca
+          //https://react-leaflet.js.org/
+
+          <div className="h-[800px] w-full p-12">
             <MapContainer
+              key={`${position[0]}-${position[1]}`} // forca a atualizacao do mapa para o novo endereço buscado
               center={position}
-              zoom={13}
+              zoom={14}
               scrollWheelZoom={false}
               style={{ height: "100%", width: "100%" }}
             >
