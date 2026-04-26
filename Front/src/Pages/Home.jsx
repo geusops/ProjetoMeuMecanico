@@ -179,7 +179,7 @@ function HomePage(props) {
             Oficinas Próximas
           </h2>
           <p className="text-gray-600 text-md text-left">
-            Exibindo oficinas em São Paulo
+            Exibindo oficinas próximas à sua localização.
           </p>
         </div>
 
@@ -312,6 +312,20 @@ function HomePage(props) {
           </ul>
         )}
       </div>
+      {/* Seletor de Quantidade */}
+      <div className="flex h-15 gap-2 rounded-lg py-2 px-2 justify-center m-12 border-b-2">
+        <label className="text-gray-600 font-medium">Mostrar:</label>
+        <select
+          onChange={(e) => props.setQuantidadeLimite(Number(e.target.value))}
+          className="bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+        >
+          <option value="9">9 oficinas</option>
+          <option value="12">12 oficinas</option>
+          <option value="24">24 oficinas</option>
+          <option value="50">Todas</option>
+        </select>
+      </div>
+
       {/* bloco convite ao cadastro */}
       <div className="bg-sky-500 flex h-15 gap-2 rounded-lg shadow py-2 px-2 justify-between m-12 border-b-2">
         <div className="flex-col items-center px-6 w-2/5 rounded-lg p-6 m-6">

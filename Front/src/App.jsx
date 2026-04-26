@@ -21,6 +21,9 @@ function App() {
   // referencia: https://www.youtube.com/watch?v=mKmxc8TcWQ8
   const [oficinas, setOficinas] = useState([]);
 
+  // controlando a quantidade de oficinas renderizadas na home page.
+  const [quantidadeLimite, setQuantidadeLimite] = useState(9);
+
   // importantando o hook de localizacao
   const { coords, buscaLocalizacao, pesquisarEndereco } = Location();
 
@@ -69,7 +72,8 @@ function App() {
           path="/home"
           element={
             <HomePage
-              oficinas={oficinas} //mandando as oficinas para home page para ser renderizados via props
+              oficinas={oficinas.slice(0, quantidadeLimite)} //mandando as oficinas para home page para ser renderizados via props
+              setQuantidadeLimite={setQuantidadeLimite}
               coords={coords} // mandando as coordenadas
               onBuscarLocalizacao={buscaLocalizacao} // mandando a funcao de buscar localizacao para a home
               onPesquisarEndereco={pesquisarEndereco} // mandando a funcao de pesquisar endereco para a home
