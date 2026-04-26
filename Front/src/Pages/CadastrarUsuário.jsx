@@ -1,16 +1,19 @@
-//Modificado por Khenny
+//Por Khenny
 
 // Importa ferramentas do React para guardar dados do formulário e usar contexto
 import { useState, useContext } from "react";
+
 // Importa navegação entre páginas e links internos
 import { useNavigate, Link } from "react-router-dom";
+
 // Importa ícones da biblioteca lucide-react
-import { ArrowLeft, Lock, Mail, User, Wrench } from "lucide-react";
+import { ArrowLeft, Lock, Mail } from "lucide-react";
+
 // Importa o contexto de autenticação (responsável por controlar o usuário logado)
 import { AuthContext } from "../context/AuthContext";
+
 // Importa a imagem da logo do projeto
 import logo from "../assets/logo-simples.png";
-import axios from "axios";
 
 // Função que representa a página de cadastro
 export default function CadastrarUsuario() {
@@ -21,14 +24,13 @@ export default function CadastrarUsuario() {
     email: "",
     senha: "",
     confirmarSenha: "",
-    tipo: "cliente",
   });
 
   // Guarda mensagens de erro
   const [erro, setErro] = useState("");
 
-  // Pega a função login do contexto
-  const { login } = useContext(AuthContext);
+  // login por cadastrar
+  const { cadastrar } = useContext(AuthContext);
 
   // Permite redirecionar o usuário para outra página
   const navigate = useNavigate();
@@ -38,61 +40,40 @@ export default function CadastrarUsuario() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  //logica usada para mudar o tipo do usuario sendo cadastrado
-  //https://www.youtube.com/watch?v=BBQoBTu3lcA
-  //https://tailwindcss.com/plus/ui-blocks/application-ui/forms/toggles
-  const toggleUserType = () => {
-    setForm((prev) => ({
-      ...prev,
-      tipo: prev.tipo === "cliente" ? "mecanico" : "cliente",
-    }));
-  };
-  //
-  // Envio dos dados do formulario para o backend
-  //
+  // Executa quando o usuário envia o formulário
   const handleSubmit = async (e) => {
-    e.preventDefault(); // evita recarregar a página
-    setErro(""); // limpa erros antigos
+    e.preventDefault();
+    setErro("");
 
-    // Verifica se os campos obrigatórios foram preenchidos
     if (!form.nome || !form.email || !form.senha || !form.telefone) {
       setErro("Preencha todos os campos obrigatórios.");
       return;
     }
-    // Verifica se as duas senhas são iguais
+
     if (form.senha !== form.confirmarSenha) {
       setErro("As senhas não coincidem.");
       return;
     }
 
-    // Verifica se a senha tem pelo menos 6 caracteres
     if (form.senha.length < 6) {
       setErro("A senha deve ter pelo menos 6 caracteres.");
       return;
     }
-    //removendo o confirmar senha antes de mandar pro banco criando o objeto usuario
-    const { confirmarSenha, ...usuario } = form;
 
-    // envido o
-    //https://salma-mohamed.medium.com/post-and-get-requests-on-both-reactjs-and-nodejs-part-1-basics-ddf9d6f219ff
-    try {
-      //chamada envio para o backend via post no endpoit usarios
-      const respPost = await axios.post(
-        "http://localhost:3000/usuarios",
-        usuario,
-      );
+    // ✅ CHAMADA REAL PARA O BACKEND
+    const resultado = await cadastrar({
+      nome: form.nome,
+      telefone: form.telefone,
+      email: form.email,
+      senha: form.senha,
+      tipo: "cliente", // pode mudar para "oficina" depois
+    });
 
-      // Faz login automaticamente após cadastro
-      login(respPost.data);
-      //envia o usuario para o perfil dele
-      navigate("/perfil");
-    } catch (err) {
-      console.error(err);
-      if (err.response?.data?.error === "Email já cadastrado") {
-        setErro("Este email já está em uso.");
-      } else {
-        setErro("Erro ao cadastrar usuário.");
-      }
+    if (resultado.success) {
+      alert("Cadastro realizado com sucesso!"); // temporário
+      navigate("/login"); // ou diretamente para /perfil se quiser logar automático
+    } else {
+      setErro(resultado.error || "Erro ao cadastrar. Tente novamente.");
     }
   };
 
@@ -101,7 +82,7 @@ export default function CadastrarUsuario() {
       {/* Botão para voltar para a página inicial */}
       <div className="p-6">
         <Link
-          to="/home"
+          to="/"
           className="flex items-center gap-2 text-gray-700 hover:text-sky-600"
         >
           <ArrowLeft size={20} />
@@ -141,41 +122,6 @@ export default function CadastrarUsuario() {
               {erro}
             </div>
           )}
-
-          <div className="bg-slate-50 p-4 rounded-xl border border-gray-200">
-            <label className="block text-gray-700 font-semibold mb-3 text-center text-sm">
-              Você deseja se cadastrar como:
-            </label>
-            <div className="flex items-center justify-center gap-4">
-              {/* Opção Cliente */}
-              <span
-                className={`text-sm flex items-center gap-1 transition-colors ${form.tipo === "cliente" ? "font-bold text-sky-600" : "text-gray-400"}`}
-              >
-                <User size={16} /> Cliente
-              </span>
-
-              {/* Botão Switch para escolher entre mecanico e usuario */}
-              <div
-                onClick={toggleUserType}
-                className={`relative w-16 h-8 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300 ${
-                  form.tipo === "mecanico" ? "bg-sky-500" : "bg-gray-300"
-                }`}
-              >
-                <div
-                  className={`bg-white w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 ${
-                    form.tipo === "mecanico" ? "translate-x-8" : "translate-x-0"
-                  }`}
-                />
-              </div>
-
-              {/* Opção Mecânico */}
-              <span
-                className={`text-sm flex items-center gap-1 transition-colors ${form.tipo === "mecanico" ? "font-bold text-sky-600" : "text-gray-400"}`}
-              >
-                <Wrench size={16} /> Mecânico
-              </span>
-            </div>
-          </div>
 
           {/* Formulário de cadastro */}
           <form onSubmit={handleSubmit} className="space-y-6">

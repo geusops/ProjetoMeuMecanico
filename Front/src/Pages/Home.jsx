@@ -14,27 +14,40 @@ import { Link } from "react-router-dom"; // ← adicionado esta linha
 import { MapContainer, TileLayer, Popup, Marker } from "react-leaflet"; //trabalhanodo com os mapas
 import "leaflet/dist/leaflet.css"; //estilo do mapa
 
-import { useState } from "react"; // usado para o "toggle"
-import Location from "../Hooks/Location";
-
+import { useState, useCallback, useRef, useMemo } from "react"; // usado para o "toggle"
+//import Location from "../Hooks/Location";
+const center = [-23.5489, -46.6388]; // São Paulo - posição default do mapa
 function HomePage(props) {
+  const [draggable, setDraggable] = useState(false);
+  const [d_position, setDPosition] = useState(center);
+  const markerRef = useRef(null);
+  const eventHandlers = useMemo(
+    () => ({
+      dragend() {
+        const marker = markerRef.current;
+        if (marker != null) {
+          setDPosition(marker.getLatLng());
+        }
+      },
+    }),
+    [],
+  );
+  const toggleDraggable = useCallback(() => {
+    setDraggable((d) => !d);
+  }, []);
+
   const [visualizacao, setVisualizacao] = useState("lista"); // visualizacao padrao é a lista
 
   //bloco para lidar com a localizacao
   //referencia: https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API/Using_the_Geolocation_API
-  //1. achar localizacao do usuario
-  const { coords, buscaLocalizacao, pesquisarEndereco } = Location();
   //vinculando com o caixa de texto para a busca
   const [textoBusca, setTextoBusca] = useState("");
 
-  //2. funcao para dar o trigger de buscar a localizao ao clicar no botao
-  const handleLocalizacao = () => {
-    buscaLocalizacao(); // Isso faz o navegador pedir permissão e escrever no console
-  };
-
   //https://giuliacajati.medium.com/all-about-openstreetmap-using-react-js-c24fd0856aca
   //3. posicao default - São Paulo
-  const position = coords ? [coords.lat, coords.lon] : [-23.541, -46.456];
+  const position = props.coords
+    ? [props.coords.lat, props.coords.lon]
+    : [-23.541, -46.456];
 
   // tentando conectar a API nodejs
   //referencia: https://www.youtube.com/watch?v=mKmxc8TcWQ8
@@ -76,13 +89,13 @@ function HomePage(props) {
             <div className="flex gap-2 w-2/5 justify-end">
               <button
                 className="flex gap-5 rounded-sm px-5 py-2 text-gray-700 border border-transparent shadow hover:bg-slate-700 hover:text-white transition"
-                onClick={handleLocalizacao}
+                onClick={props.onBuscarLocalizacao} //aqui buscamos pela localizacao atual
               >
                 <Navigation />
                 Localização Atual
               </button>
               <button
-                onClick={() => pesquisarEndereco(textoBusca)} // Dispara a pesquisa
+                onClick={() => props.onPesquisarEndereco(textoBusca)} // Dispara a pesquisa
                 className="flex gap-5 rounded-sm px-5 py-2 bg-sky-500 text-white shadow hover:bg-slate-700 transition"
               >
                 <Search />
@@ -173,7 +186,9 @@ function HomePage(props) {
 
           <div className="h-[800px] w-full p-12">
             <MapContainer
-              key={`${position[0]}-${position[1]}`} // forca a atualizacao do mapa para o novo endereço buscado
+              /* A 'key' é o segredo: sempre que a lat ou lon mudar, 
+         o React destrói o mapa velho e cria um novo centralizado no lugar certo */
+              key={`${position[0]}-${position[1]}`}
               center={position}
               zoom={14}
               scrollWheelZoom={false}
@@ -183,9 +198,39 @@ function HomePage(props) {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
+
+              {/* Marcador da sua posição buscada */}
               <Marker position={position}>
-                <Popup>Sua oficina está aqui!</Popup>
+                <Popup>Você está pesquisando desta posição!</Popup>
               </Marker>
+
+              <Marker
+                draggable={draggable}
+                eventHandlers={eventHandlers}
+                position={d_position}
+                ref={markerRef}
+              >
+                <Popup minWidth={90}>
+                  <span onClick={toggleDraggable}>
+                    {draggable
+                      ? "Marker is draggable"
+                      : "Click here to make marker draggable"}
+                  </span>
+                </Popup>
+              </Marker>
+
+              {/* Marcadores das oficinas */}
+              {props.oficinas.map((oficina) => (
+                <Marker
+                  key={oficina.id_oficina}
+                  position={[
+                    oficina.latitude_oficina,
+                    oficina.longitude_oficina,
+                  ]}
+                >
+                  <Popup>{oficina.nome}</Popup>
+                </Marker>
+              ))}
             </MapContainer>
           </div>
         )}

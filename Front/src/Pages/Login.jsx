@@ -1,4 +1,4 @@
-//Modificado por Khenny
+//Por Khenny
 
 // Importa ferramentas do React para controlar dados e usar contexto
 import { useState, useContext } from "react";
@@ -28,34 +28,24 @@ export default function Login() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Função executada quando o formulário é enviado
-  const handleSubmit = (e) => {
-    // Impede o recarregamento da página
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Limpa mensagens de erro antigas
     setErro("");
 
-    // Verifica se email ou senha estão vazios
     if (!form.email || !form.senha) {
       setErro("Preencha email e senha.");
       return;
     }
 
-    // Simulação de um usuário logado (no futuro virá do backend)
-    const usuarioSimulado = {
-      id: Date.now(), // gera um id simples
-      nome: "Usuário Teste",
-      email: form.email,
-    };
+    // ✅ CHAMADA REAL PARA O BACKEND
+    const resultado = await login(form.email, form.senha);
 
-    // Chama a função login e salva o usuário
-    login(usuarioSimulado);
-
-    // Redireciona para a página de perfil
-    navigate("/perfil");
+    if (resultado.success) {
+      navigate("/perfil");
+    } else {
+      setErro(resultado.error || "Email ou senha incorretos.");
+    }
   };
-
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
       {/* Caixa central do formulário */}
