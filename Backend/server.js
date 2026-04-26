@@ -63,22 +63,20 @@ con.connect(function (err) {
 });
 
 //testando novo modelo de busca - Geu
-// No seu arquivo de rotas (ex: server.js ou routes.js)
 
 app.get("/oficinas", (req, res) => {
   // Pegamos os valores da URL. Ex: /oficinas?lat=-23.54&lon=-46.45&raio=20
   const { lat, lon, raio } = req.query;
 
-  // IMPORTANTE: Converter para número e validar
+  // conversando dos valores para float
   const userLat = parseFloat(lat);
   const userLon = parseFloat(lon);
-  const searchRaio = parseFloat(raio) || 10; // 10km como padrão
+  const searchRaio = parseFloat(raio) || 10; // definindo 10km como padrão
 
-  if (isNaN(userLat) || isNaN(userLon)) {
-    return res.status(400).json({ error: "Coordenadas inválidas" });
-  }
+  // Query para calcular a distancia das oficinas e filtrando pelo raio usando a função ST_Distance_Sphere no MySQL.
+  //https://dev.mysql.com/doc/refman/8.4/en/spatial-convenience-functions.html
 
-  // A mesma query que você testou, agora com placeholders (?)
+  // Aqui, a função ST_Distance_Sphere calcular a distancia entre dois pontos (point 1 e point 2). Nesse caso, um dos pontos é a localização da oficina (longitude_oficina e latitude_oficina) e o outro é a localização que vamos mandar, podendo ser a localizacao do usuário ou um placeholder fixo. HAVING distancia_km <= ? é usando para filtrar e trazer oficinas que estejam dentro de um raio definido. O resultado é ordenado pela distancia.
   const sql = `
     SELECT 
         * ,
@@ -91,8 +89,7 @@ app.get("/oficinas", (req, res) => {
     ORDER BY distancia_km ASC
   `;
 
-  // No con.query, passamos os valores na ordem dos '?'
-  // Ordem: lon, lat, raio (seguindo a lógica do POINT(lon, lat))
+  // Importante ressaltar que nessa funcao, a longitude vem antes da latitude. Isso é um padrao do MySQL.
   con.query(sql, [userLon, userLat, searchRaio], (err, result) => {
     if (err) {
       console.error("Erro na busca:", err);

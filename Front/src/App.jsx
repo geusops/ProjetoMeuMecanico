@@ -41,14 +41,24 @@ function App() {
     fetchAPI();
   }, []);
 
-  // Monitora mudança de coordenadas
+  // Monitora mudança de coordenadas quando o usuario pesquisa um endereco ou clica pra buscar a localizacao atual
   useEffect(() => {
     if (coords) {
       console.log("Atualizando lista com:", coords);
       fetchAPI(coords.lat, coords.lon);
     }
   }, [coords, fetchAPI]);
+  // Dentro do App.jsx, crie esta função específica para o arraste
+  const handleArrasteMapa = useCallback(
+    async (lat, lon) => {
+      // 1. Opcional: Se o seu hook Location permitir, você pode atualizar o centro global aqui
+      // Isso ajuda a manter a sincronia entre os componentes
+      // setCoords({ lat, lon });
 
+      await fetchAPI(lat, lon);
+    },
+    [fetchAPI],
+  );
   return (
     // colocando a aplicacao debaixo do chapeu do browser router
     <>
@@ -59,10 +69,11 @@ function App() {
           path="/home"
           element={
             <HomePage
-              oficinas={oficinas}
-              coords={coords}
-              onBuscarLocalizacao={buscaLocalizacao}
-              onPesquisarEndereco={pesquisarEndereco}
+              oficinas={oficinas} //mandando as oficinas para home page para ser renderizados via props
+              coords={coords} // mandando as coordenadas
+              onBuscarLocalizacao={buscaLocalizacao} // mandando a funcao de buscar localizacao para a home
+              onPesquisarEndereco={pesquisarEndereco} // mandando a funcao de pesquisar endereco para a home
+              onArrasteMapa={handleArrasteMapa}
             />
           }
         />

@@ -11,31 +11,22 @@ import {
   Star,
 } from "lucide-react";
 import { Link } from "react-router-dom"; // ← adicionado esta linha
-import { MapContainer, TileLayer, Popup, Marker } from "react-leaflet"; //trabalhanodo com os mapas
+import { MapContainer, TileLayer, Popup, Marker, useMap } from "react-leaflet"; //trabalhanodo com os mapas
 import "leaflet/dist/leaflet.css"; //estilo do mapa
 
-import { useState, useCallback, useRef, useMemo } from "react"; // usado para o "toggle"
+import { useState, useRef, useMemo, useEffect, useCallback } from "react"; // usado para o "toggle"
 //import Location from "../Hooks/Location";
-const center = [-23.5489, -46.6388]; // São Paulo - posição default do mapa
-function HomePage(props) {
-  const [draggable, setDraggable] = useState(false);
-  const [d_position, setDPosition] = useState(center);
-  const markerRef = useRef(null);
-  const eventHandlers = useMemo(
-    () => ({
-      dragend() {
-        const marker = markerRef.current;
-        if (marker != null) {
-          setDPosition(marker.getLatLng());
-        }
-      },
-    }),
-    [],
-  );
-  const toggleDraggable = useCallback(() => {
-    setDraggable((d) => !d);
-  }, []);
 
+function RecenterMap({ position }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(position);
+  }, [position, map]);
+  return null;
+}
+
+function HomePage(props) {
+  const [draggable, setDraggable] = useState(true); // Começa como arrastável
   const [visualizacao, setVisualizacao] = useState("lista"); // visualizacao padrao é a lista
 
   //bloco para lidar com a localizacao
@@ -44,10 +35,52 @@ function HomePage(props) {
   const [textoBusca, setTextoBusca] = useState("");
 
   //https://giuliacajati.medium.com/all-about-openstreetmap-using-react-js-c24fd0856aca
-  //3. posicao default - São Paulo
-  const position = props.coords
-    ? [props.coords.lat, props.coords.lon]
-    : [-23.541, -46.456];
+  //Calculo da posicao inicial do mapa. Se nao tiver, centraliza em SP
+  // Esse props vem do App.jsx, de onde a gente puxa as coordadas do hook de localizacao
+  const position = useMemo(() => {
+    return props.coords
+      ? [props.coords.lat, props.coords.lon]
+      : [-23.541, -46.456];
+  }, [props.coords]);
+
+  const [d_position, setDPosition] = useState(position);
+  const [foiArrastado, setFoiArrastado] = useState(false);
+  const markerRef = useRef(null);
+
+  useEffect(() => {
+    // Verificamos se a distância entre a posição atual do marcador e a nova prop é grande o suficiente
+    // Isso evita que pequenos ajustes de precisão do GPS puxem o marcador de volta
+    const latDiff = Math.abs(d_position[0] - position[0]);
+    const lonDiff = Math.abs(d_position[1] - position[1]);
+
+    if (latDiff > 0.0001 || lonDiff > 0.0001) {
+      setDPosition(position);
+    }
+  }, [position]); // Remova o foiArrastado daqui
+
+  const eventHandlers = useMemo(
+    () => ({
+      dragend() {
+        const marker = markerRef.current;
+        if (marker != null) {
+          const newPos = marker.getLatLng();
+          const newCoords = [newPos.lat, newPos.lng];
+
+          // 1. Primeiro trava a posição localmente
+          setFoiArrastado(true);
+          setDPosition(newCoords);
+
+          // 2. Depois avisa o App para buscar novas oficinas
+          props.onArrasteMapa(newPos.lat, newPos.lng);
+        }
+      },
+    }),
+    [props],
+  );
+
+  const toggleDraggable = useCallback(() => {
+    setDraggable((d) => !d);
+  }, []);
 
   // tentando conectar a API nodejs
   //referencia: https://www.youtube.com/watch?v=mKmxc8TcWQ8
@@ -188,7 +221,6 @@ function HomePage(props) {
             <MapContainer
               /* A 'key' é o segredo: sempre que a lat ou lon mudar, 
          o React destrói o mapa velho e cria um novo centralizado no lugar certo */
-              key={`${position[0]}-${position[1]}`}
               center={position}
               zoom={14}
               scrollWheelZoom={false}
@@ -199,10 +231,7 @@ function HomePage(props) {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
-              {/* Marcador da sua posição buscada */}
-              <Marker position={position}>
-                <Popup>Você está pesquisando desta posição!</Popup>
-              </Marker>
+              <RecenterMap position={position} />
 
               <Marker
                 draggable={draggable}
