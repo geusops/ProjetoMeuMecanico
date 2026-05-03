@@ -338,11 +338,13 @@ function HomePage(props) {
             novos clientes na sua região todos os meses.
           </p>
         </div>
-        <div className="p-10 content-center">
+      <div className="p-10 content-center">
+        <Link to="/cadastraroficina">
           <button className="rounded-md font-bold text-2xl bg-slate-50 px-20 h-20 text-sky-500 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
             Cadastrar Minha Oficina
           </button>
-        </div>
+        </Link>
+      </div>
       </div>
     </div>
   );

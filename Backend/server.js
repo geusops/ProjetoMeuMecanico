@@ -223,6 +223,28 @@ app.post("/login", (req, res) => {
   });
 });
 
+// Rota de Cadastro de Oficina
+app.post("/oficinas", (req, res) => {
+  console.log("📩 Dados recebidos no cadastro de oficina:", req.body);
+
+  const { nome, telefone, email, endereco, especialidade, latitude_oficina, longitude_oficina, id_mecanico } = req.body;
+
+  if (!nome || !endereco) {
+    return res.status(400).json({ error: "Nome e endereço são obrigatórios" });
+  }
+
+  const sql = `INSERT INTO oficinas (nome, telefone, email, endereco, especialidade, latitude_oficina, longitude_oficina, id_mecanico) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+
+  con.query(sql, [nome, telefone, email, endereco, especialidade, latitude_oficina, longitude_oficina, id_mecanico], (err, result) => {
+    if (err) {
+      console.error("❌ Erro ao cadastrar oficina:", err);
+      return res.status(500).json({ error: "Erro interno ao cadastrar oficina" });
+    }
+    console.log("✅ Oficina cadastrada com ID:", result.insertId);
+    res.status(201).json({ message: "Oficina cadastrada com sucesso!", id: result.insertId });
+  });
+});
+
 //porta de servico - Khenny
 app.listen(3000, () => {
   console.log("🚀 Backend rodando com sucesso na porta 3000");

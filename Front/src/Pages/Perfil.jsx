@@ -4,7 +4,7 @@
 import { useContext, useEffect } from "react";
 
 // Importa ferramenta para redirecionar o usuário entre páginas
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 // Importa o contexto de autenticação (onde ficam os dados do usuário logado)
 import { AuthContext } from "../context/AuthContext";
@@ -59,7 +59,18 @@ export default function Perfil() {
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               Funcionalidades em breve
             </h2>
-
+         {/* Botão para cadastrar oficina */}
+         <div className="bg-sky-50 p-6 rounded-xl border border-sky-100">
+           <h2 className="text-2xl font-semibold text-sky-800 mb-4">
+             Você tem uma oficina?
+           </h2>
+           <p className="text-gray-700 mb-4">Cadastre sua oficina e apareça no mapa para novos clientes.</p>
+           <Link to="/cadastraroficina">
+             <button className="bg-sky-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-sky-600 transition">
+               Cadastrar Minha Oficina
+             </button>
+           </Link>
+         </div>
             {/* Lista de possíveis funções futuras */}
             <ul className="list-disc pl-6 text-gray-700 space-y-2">
               <li>Oficinas favoritas</li>

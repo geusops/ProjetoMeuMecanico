@@ -6,24 +6,65 @@ import {
   ArrowLeft,
   CircleCheck,
 } from "lucide-react";
-import { useState } from "react";
-import { NavLink, Link } from "react-router-dom";
+import { useState, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function CadastrarOfina() {
   // checa qual botao esta ativo
-  const [ativo, setAtivo] = useState("minha_oficina");
-  console.log(ativo);
+  const [ativo, setAtivo] = useState("minha_oficina");// Estado do endereço (CEP, rua, etc)
+  const [endereco, setEndereco] = useState({cep: "",rua: "",numero: "",complemento: "",bairro: "",cidade: "",estado: "",});
+ // estado para os campos da oficina - adicionado para envio ao backend
+  const [form, setForm] = useState({ nome: "", email: "", telefone: "" });
+  const [mensagem, setMensagem] = useState("");
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
 
-  //para usar a api da via cep, criei esse objeto para armazenar os dados do endereco e setar o conteudo os campos
-  const [endereco, setEndereco] = useState({
-    cep: "",
-    rua: "",
-    numero: "",
-    complemento: "",
-    bairro: "",
-    cidade: "",
-    estado: "",
-  });
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  console.log("Usuário logado:", user); const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMensagem("");
+    const enderecoCompleto = `${endereco.rua}, ${endereco.numero || "s/n"} - ${endereco.bairro}, ${endereco.cidade} - ${endereco.estado}, Brasil`;    try {
+
+     // convertendo CEP em coordenadas via OpenStreetMap
+     let lat = null;
+     let lon = null;
+     try {
+       const geo = await fetch(
+         `https://nominatim.openstreetmap.org/search?format=json&q=${endereco.cep},Brasil&countrycodes=br`
+      );
+      const geoData = await geo.json();
+      if (geoData.length > 0) {
+       lat = parseFloat(geoData[0].lat);
+       lon = parseFloat(geoData[0].lon);
+      }
+  console.log("Coordenadas obtidas:", lat, lon);
+} catch (e) {
+  console.log("Não foi possível obter coordenadas");
+}
+
+      await axios.post("http://localhost:3000/oficinas", {
+        nome: form.nome,
+        email: form.email,
+        telefone: form.telefone,
+        endereco: enderecoCompleto,
+        especialidade: "",
+        latitude_oficina: lat,
+        longitude_oficina: lon,
+        id_mecanico: user?.id || 1,
+      });
+      setMensagem("✅ Oficina cadastrada com sucesso!");
+      setTimeout(() => navigate("/home"), 2000);
+    } catch (error) {
+      setMensagem("❌ Erro ao cadastrar. Tente novamente.");
+      console.error(error);
+    }
+  };
 
   //referencia:
   //https://www.youtube.com/watch?v=155ywtYSpdY
@@ -162,6 +203,8 @@ function CadastrarOfina() {
                         placeholder="Ex: Auto Mecânica Silva"
                         className="w-full px-4 py-3 bg-slate-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                         required
+                        value={form.nome}
+                        onChange={handleFormChange}
                       />
                     </div>
                   </div>
@@ -180,6 +223,8 @@ function CadastrarOfina() {
                         placeholder="contato@oficina.com"
                         className="w-full px-4 py-3 bg-slate-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                         required
+                        value={form.email}
+                        onChange={handleFormChange}
                       />
                     </div>
                   </div>
@@ -198,6 +243,8 @@ function CadastrarOfina() {
                         placeholder="Ex: Auto Mecânica Silva"
                         className="w-full px-4 py-3 bg-slate-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                         required
+                        value={form.telefone}
+                        onChange={handleFormChange}
                       />
                     </div>
                   </div>
@@ -545,11 +592,15 @@ function CadastrarOfina() {
                 <p>Voltar para home</p>
               </Link>
             </div>
+            
+            {/* mensagem de feedback */}
+            {mensagem && <p className="font-semibold text-lg">{mensagem}</p>}
+
             <div className="flex gap-6">
               <button className="flex rounded-sm px-6 py-2 text-gray-700 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
                 Descartar alteraçoes
               </button>
-              <button className="flex gap-2 rounded-sm px-6 py-2 bg-sky-500 text-white shadow hover:bg-slate-700 transition">
+              <button onClick={handleSubmit} className="flex gap-2 rounded-sm px-6 py-2 bg-sky-500 text-white shadow hover:bg-slate-700 transition">
                 <CircleCheck />
                 Finalizar cadastro
               </button>

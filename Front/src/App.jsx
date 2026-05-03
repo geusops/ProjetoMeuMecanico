@@ -15,8 +15,14 @@ import { Routes, Route } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react"; //conexao com a API node
 import axios from "axios"; //conexao com a API node
 import Location from "./Hooks/Location"; //Localizacao
+//adicionado por fora
+import { useContext } from "react";
+import { AuthContext } from "./context/AuthContext";
+import { Navigate } from "react-router-dom";
 
 function App() {
+  
+  const { user } = useContext(AuthContext);
   // consumindo a api node para ler as infos do banco
   // referencia: https://www.youtube.com/watch?v=mKmxc8TcWQ8
   const [oficinas, setOficinas] = useState([]);
@@ -90,7 +96,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<CadastrarUsuario />} />
         <Route path="/perfil" element={<Perfil />} />
-        <Route path="/cadastraroficina" element={<CadastrarOfina />} />
+        <Route  path="/cadastraroficina" element={user ? <CadastrarOfina /> : <Navigate to="/login" />} />
       </Routes>
       <Footer />
     </>
