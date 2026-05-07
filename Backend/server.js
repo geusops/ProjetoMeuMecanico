@@ -282,7 +282,7 @@ app.get("/avaliacoes/:id_oficina", (req, res) => {
   `;
   con.query(sql, [id_oficina], (err, result) => {
     if (err) {
-      console.error("❌ Erro ao buscar avaliações:", err);
+      console.error("❌s Erro ao buscar avaliações:", err);
       return res.status(500).json({ error: "Erro ao buscar avaliações" });
     }
     res.json({ avaliacoes: result });
