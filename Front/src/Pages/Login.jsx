@@ -1,4 +1,4 @@
-// UC06 - Sistema de Login 100% TCC - Khenny
+// UC06 - Sistema de Login - Khenny
 
 import { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
