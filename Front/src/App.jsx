@@ -10,7 +10,7 @@ import Login from "./Pages/Login";
 import CadastrarUsuario from "./Pages/CadastrarUsuário";
 import Perfil from "./Pages/Perfil";
 import CadastrarOfina from "./Pages/CadastrarOficina";
-
+import Admin from "./Pages/Admin";     
 import { Routes, Route } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react"; //conexao com a API node
 import axios from "axios"; //conexao com a API node
@@ -74,6 +74,7 @@ function App() {
       <Headers />
       {/* criando as rotas */}
       <Routes>
+        
         <Route
           path="/home"
           element={
@@ -97,6 +98,11 @@ function App() {
         <Route path="/cadastro" element={<CadastrarUsuario />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route  path="/cadastraroficina" element={user ? <CadastrarOfina /> : <Navigate to="/login" />} />
+        
+      {/* NOVA ROTA - UC04 */}
+        <Route path="/admin" element={<Admin />} />
+        <Route path="*" element={<h1>404 - Página não encontrada</h1>} />
+
       </Routes>
       <Footer />
     </>

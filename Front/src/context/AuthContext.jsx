@@ -15,7 +15,9 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Login com backend
+  // Login com backend (secção 3.5)
+  
+  // Front/src/context/AuthContext.jsx
   const login = async (email, senha) => {
     try {
       const res = await axios.post("http://localhost:3000/login", {

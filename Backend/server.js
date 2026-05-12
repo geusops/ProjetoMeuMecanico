@@ -190,6 +190,7 @@ app.post("/usuarios", async (req, res) => {
   }
 });
 
+// Backend/server.js (secção 3.5)
 app.post("/login", (req, res) => {
   console.log("📩 Recebida requisição de login");
   const { email, senha } = req.body;
@@ -286,6 +287,42 @@ app.get("/avaliacoes/:id_oficina", (req, res) => {
       return res.status(500).json({ error: "Erro ao buscar avaliações" });
     }
     res.json({ avaliacoes: result });
+  });
+});
+
+// UC04 - Rotas Admin - Khenny
+
+// Listar todos os usuarios
+app.get("/admin/usuarios", (req, res) => {
+  con.query("SELECT id_usuario, nome, email, tipo FROM usuarios", (err, result) => {
+    if (err) return res.status(500).json({ error: "Erro ao buscar usuários" });
+    res.json({ usuarios: result });
+  });
+});
+
+// Deletar usuario
+app.delete("/admin/usuarios/:id", (req, res) => {
+  const { id } = req.params;
+  con.query("DELETE FROM usuarios WHERE id_usuario = ?", [id], (err) => {
+    if (err) return res.status(500).json({ error: "Erro ao deletar usuário" });
+    res.json({ message: "Usuário removido com sucesso!" });
+  });
+});
+
+// Listar todas as oficinas
+app.get("/admin/oficinas", (req, res) => {
+  con.query("SELECT id_oficina, nome, endereco, especialidade, email FROM oficinas", (err, result) => {
+    if (err) return res.status(500).json({ error: "Erro ao buscar oficinas" });
+    res.json({ oficinas: result });
+  });
+});
+
+// Deletar oficina
+app.delete("/admin/oficinas/:id", (req, res) => {
+  const { id } = req.params;
+  con.query("DELETE FROM oficinas WHERE id_oficina = ?", [id], (err) => {
+    if (err) return res.status(500).json({ error: "Erro ao deletar oficina" });
+    res.json({ message: "Oficina removida com sucesso!" });
   });
 });
 
