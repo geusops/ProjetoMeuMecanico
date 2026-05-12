@@ -6,17 +6,27 @@ import { AuthContext } from "../context/AuthContext";
 
 export default function Login() {
   
+  // Guarda o que o usuário digita (email e senha)
   const [form, setForm] = useState({ email: "", senha: "" });
+
+  // Guarda mensagem de erro para mostrar na tela
   const [erro, setErro] = useState("");
+
+  // Controla se o botão está carregando (Entrando...)
   const [loading, setLoading] = useState(false);
 
+  // Pega a função de login que vem do sistema de autenticação
   const { login } = useContext(AuthContext);
+
+  // Usado para mudar de página após o login
   const navigate = useNavigate();
 
+  // Atualiza os campos quando o usuário digita
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Função executada quando o usuário clica em "Entrar"
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErro("");
@@ -28,10 +38,11 @@ export default function Login() {
       return;
     }
 
+    // Envia os dados para o backend verificar se o login está correto
     const resultado = await login(form.email, form.senha);
 
     if (resultado.success) {
-      // Redireciona Admin para o painel e usuários normais para o perfil
+      // Redireciona o usuário conforme seu tipo
       if (resultado.user?.tipo?.toUpperCase() === "ADMIN") {
         navigate("/admin");
       } else {
@@ -52,6 +63,7 @@ export default function Login() {
           Entrar na conta
         </h1>
 
+        {/* Mostra erro caso o login falhe */}
         {erro && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
             {erro}
@@ -104,4 +116,4 @@ export default function Login() {
       </div>
     </div>
   );
-} 
+}
