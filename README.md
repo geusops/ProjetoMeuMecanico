@@ -1,8 +1,92 @@
-### Passos para ter acesso às oficinas
+# Meu Mecânico
 
-Etapas necessárias:
-1. Criar o banco
-2. Criar o usuário de conexão
+**Plataforma de conexão entre motoristas e oficinas mecânicas confiáveis.**
 
-Para a criação do banco de dados, use o arquivo dentro da pasta Database> MySQL> Meu_Mecanico_dump.sql para importar as estruturas e dados do banco.
-Para a criação o usuário, siga as instruções no arquivo Database> MySQL> create_user.sql
+Projeto desenvolvido como Trabalho de Conclusão de Curso (TCC) do Técnico em Desenvolvimento de Sistemas - EaD.
+
+---
+
+## 📋 Sobre o Projeto
+
+O **Meu Mecânico** é uma plataforma web full-stack que permite aos motoristas encontrarem oficinas próximas, visualizarem avaliações reais e agendarem serviços, enquanto as oficinas podem se cadastrar, receber avaliações e gerenciar seu perfil.
+
+### Tecnologias Utilizadas
+
+- **Frontend**: React + Vite + React Router + Leaflet (Mapas)
+- **Backend**: Node.js + Express
+- **Banco de Dados**: MySQL (MariaDB)
+- **Autenticação**: JWT + bcrypt
+- **Outros**: Axios, Lucide React (ícones), Tailwind CSS
+
+---
+
+## 🚀 Como Rodar o Projeto
+
+### 1. Pré-requisitos
+
+- Instale o **XAMPP** (ou outro servidor local com MySQL)
+- Instale o **Node.js** (versão 18 ou superior)
+- Instale o **Git**
+
+### 2. Configurar o Banco de Dados
+
+1. Abra o **XAMPP** e inicie o **Apache** e o **MySQL**
+2. Acesse o **phpMyAdmin** (`http://localhost/phpmyadmin`)
+3. Crie um banco chamado **`meu_mecanico`**
+4. Importe o arquivo:  
+   `Database/MySQL/meu_mecanico_full_dump.sql`
+
+### 3. Rodar o Backend
+
+```bash
+cd Backend
+npm install
+npm run dev
+
+O backend deve rodar em: http://localhost:3000
+
+#### 4. Rodar o Backend
+
+```Bash
+cd Front
+npm install --legacy-peer-deps
+npm run dev
+O frontend deve abrir em: http://localhost:5173
+
+📁 Estrutura de Pastas
+textProjetoMeuMecanico/
+├── Backend/  → API, rotas e lógica do servidor
+├── Front/    → Interface (React)
+├── Database/ → Scripts SQL e dumps do banco
+└── README.md
+
+🔑 Usuários de Teste
+
+Tipo    Email                    Senha 
+Admin   admin@meumecanico.com    password
+Cliente cliente@meumecanico.com  123456
+Oficina saojorge@meumecanico.com 123456
+
+Funcionalidades Desenvolvidas
+
+Cadastro e Login (com JWT)
+Mapa interativo com geolocalização
+Cadastro de Oficinas
+Sistema de Avaliações
+Painel Administrativo
+Busca por proximidade
+Filtros avançados
+
+
+Equipe
+
+Geuso Pinheiro da Silva
+Khenny Cristian Gonzales Jaldin
+José Ryan Silva Nery
+
+Orientadora: Profª. Tatiana Carla de Mattos Valério Monteiro
+
+Desenvolvido em 2026
+São Paulo - SP
+
+Qualquer dúvida, entre em contato com a equipe.
