@@ -38,55 +38,73 @@ O **Meu Mecânico** é uma plataforma web full-stack que permite aos motoristas 
 
 ### 3. Rodar o Backend
 
-```bash
+```Bash
 cd Backend
 npm install
 npm run dev
 
 O backend deve rodar em: http://localhost:3000
+```
 
-#### 4. Rodar o Backend
+### 4. Rodar o Backend
 
 ```Bash
 cd Front
 npm install --legacy-peer-deps
 npm run dev
-O frontend deve abrir em: http://localhost:5173
 
-📁 Estrutura de Pastas
+O frontend deve abrir em: http://localhost:5173
+```
+
+#### 📁 Estrutura de Pastas
+
+```Bash (desing)
 textProjetoMeuMecanico/
 ├── Backend/  → API, rotas e lógica do servidor
-├── Front/    → Interface (React)
+├── Front/    → Interface
 ├── Database/ → Scripts SQL e dumps do banco
 └── README.md
+```
 
-🔑 Usuários de Teste
+#### 🔑 Usuários de Teste
 
+```Bash (desing)
 Tipo    Email                    Senha 
 Admin   admin@meumecanico.com    password
 Cliente cliente@meumecanico.com  123456
 Oficina saojorge@meumecanico.com 123456
+```
 
-Funcionalidades Desenvolvidas
+#### Funcionalidades Desenvolvidas
 
-Cadastro e Login (com JWT)
-Mapa interativo com geolocalização
-Cadastro de Oficinas
-Sistema de Avaliações
-Painel Administrativo
-Busca por proximidade
-Filtros avançados
+```Bash (desing)
+1.Cadastro e Login (com JWT)
+2.Mapa interativo com geolocalização
+3.Cadastro de Oficinas
+4.Sistema de Avaliações
+5.Painel Administrativo
+6.Busca por proximidade
+7.Filtros avançados
+```
 
+#### Equipe
 
-Equipe
+```Bash (desing)
+- Geuso Pinheiro da Silva
+- Khenny Cristian Gonzales Jaldin
+- José Ryan Silva Nery
+```
 
-Geuso Pinheiro da Silva
-Khenny Cristian Gonzales Jaldin
-José Ryan Silva Nery
+#### Orientadora: Profª. Tatiana Carla de Mattos Valério Monteiro
 
-Orientadora: Profª. Tatiana Carla de Mattos Valério Monteiro
-
+```Bash (desing)
 Desenvolvido em 2026
 São Paulo - SP
 
 Qualquer dúvida, entre em contato com a equipe.
+```
+
+##### 📝 Sobre este README
+
+Este arquivo README foi elaborado com base no artigo:
+RAUL LEITE. GitHub: como fazer um README.md bonitão. Medium, 2023. Disponível em: https://raullesteves.medium.com/github-como-fazer-um-readme-md-bonitão-c85c8f154f8. Acesso em: maio 2026.
