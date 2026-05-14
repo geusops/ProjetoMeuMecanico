@@ -101,3 +101,7 @@ ProjetoMeuMecanico/
 ---
 
 *Desenvolvido em 2026 — São Paulo, SP*
+
+## Referências
+
+* [Como fazer um README.md BONITÃO](https://raullesteves.medium.com/github-como-fazer-um-readme-md-bonit%C3%A3o-c85c8f154f8) — Artigo de Raul Esteves no Medium.
