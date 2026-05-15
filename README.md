@@ -105,3 +105,7 @@ ProjetoMeuMecanico/
 ## Referências
 
 * [Como fazer um README.md BONITÃO](https://raullesteves.medium.com/github-como-fazer-um-readme-md-bonit%C3%A3o-c85c8f154f8) — Artigo de Raul Esteves no Medium.
+
+NPM. package.json. npm Docs, 2026. Disponível em: <https://docs.npmjs.com/cli/v11/configuring-npm/package-json>. Acesso em: 14 mai. 2026.
+
+https://stackoverflow.com/questions/74550175/how-do-i-store-a-jwt-secret-in-an-environment-variable-and-then-use-it-in-anothe
