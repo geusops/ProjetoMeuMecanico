@@ -148,8 +148,7 @@ app.get("/", (req, res) => {
 
 // Rota de Cadastro - Khenny
 app.post("/usuarios", async (req, res) => {
-  console.log("📩 Dados recebidos no cadastro:", req.body); // ← Adicionado para debug
-
+  console.log("📩 Cadastro recebido - Email:", req.body.email); // Senha oculta por segurança
   const { nome, telefone, email, senha, tipo = "cliente" } = req.body;
 
   if (!nome || !email || !senha) {
@@ -192,9 +191,8 @@ app.post("/usuarios", async (req, res) => {
 
 // Backend/server.js (secção 3.5)
 app.post("/login", (req, res) => {
-  console.log("📩 Recebida requisição de login");
-  const { email, senha } = req.body;
-
+ console.log("📩 Tentativa de login - Email:", req.body.email);
+   const { email, senha } = req.body;
   const sql = "SELECT * FROM usuarios WHERE email = ?";
   con.query(sql, [email], async (err, results) => {
     if (err || results.length === 0) {
