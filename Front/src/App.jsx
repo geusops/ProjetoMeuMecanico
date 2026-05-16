@@ -80,6 +80,18 @@ function App() {
     e8: "Pintura e Funilaria",
   };
 
+  // aqui eu mapeio as marcas de chave para descricao.
+  const MAPA_MARCAS = {
+    m1: "Chevrolet",
+    m2: "Volkswagen",
+    m3: "Fiat",
+    m4: "Honda",
+    m5: "Toyota",
+    m6: "Nissan",
+    m7: "Renault",
+    m8: "Outros",
+  };
+
   return (
     // colocando a aplicacao debaixo do chapeu do browser router
     <>
@@ -100,6 +112,7 @@ function App() {
               onPesquisarEndereco={pesquisarEndereco} // mandando a funcao de pesquisar endereco para a home
               onArrasteMapa={handleArrasteMapa}
               mapaEspecialidades={MAPA_ESPECIALIDADES} // mandando o mapeamento das especialidades para a home
+              mapaMarcas={MAPA_MARCAS}
             />
           }
         />
@@ -109,6 +122,7 @@ function App() {
             <Oficinas
               oficinas={oficinas}
               mapaEspecialidades={MAPA_ESPECIALIDADES} // mandando o mapeamento das especialidades para a pag de oficinas
+              mapaMarcas={MAPA_MARCAS}
             />
           }
         />
@@ -119,6 +133,7 @@ function App() {
             <DetalhesOficina
               dados={oficinas}
               mapaEspecialidades={MAPA_ESPECIALIDADES} // mandando o mapeamento das especialidades para a pag de detalhes oficinas
+              mapaMarcas={MAPA_MARCAS}
             />
           }
         />
