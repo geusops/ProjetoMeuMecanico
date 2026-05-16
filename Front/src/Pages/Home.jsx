@@ -25,6 +25,18 @@ function RecenterMap({ position }) {
   return null;
 }
 
+// Dicionário para converter as chaves do banco de dados na marca real
+// const MAPA_MARCAS = {
+//   m1: "Chevrolet",
+//   m2: "Volkswagen",
+//   m3: "Fiat",
+//   m4: "Honda",
+//   m5: "Toyota",
+//   m6: "Nissan",
+//   m7: "Renault",
+//   m8: "Outros",
+// };
+
 function HomePage(props) {
   const [draggable, setDraggable] = useState(true); // Começa como arrastável
   const [visualizacao, setVisualizacao] = useState("lista"); // visualizacao padrao é a lista
@@ -286,10 +298,15 @@ function HomePage(props) {
                       <p>{oficina.endereco}</p>
                     </div>
 
-                    <div className="flex p-1 pb-2">
-                      <p className="bg-slate-200 rounded-full p-2 border-0">
-                        {oficina.especialidade}
-                      </p>
+                    <div className="flex flex-wrap gap-1 p-1 pb-2">
+                      {oficina.especialidade?.split(",").map((chave, index) => (
+                        <p
+                          key={index}
+                          className="bg-slate-200 text-black text-xs font-semibold rounded-full px-3 py-1 border-0 shadow-sm"
+                        >
+                          {props.mapaEspecialidades[chave.trim()] || chave}
+                        </p>
+                      ))}
                     </div>
                     <button className="border-2 w-full text-left text-gray-700 font-bold p-2 hover:bg-slate-700 hover:text-white">
                       <Link
@@ -339,9 +356,11 @@ function HomePage(props) {
           </p>
         </div>
         <div className="p-10 content-center">
-          <button className="rounded-md font-bold text-2xl bg-slate-50 px-20 h-20 text-sky-500 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
-            Cadastrar Minha Oficina
-          </button>
+          <Link to="/oficinas/cadastrar">
+            <button className="rounded-md font-bold text-2xl bg-slate-50 px-20 h-20 text-sky-500 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
+              Cadastrar Minha Oficina
+            </button>
+          </Link>
         </div>
       </div>
     </div>

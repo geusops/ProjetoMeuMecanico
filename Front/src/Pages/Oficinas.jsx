@@ -8,7 +8,33 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
+// Khenny filtros de busca aprimorada com Claude.IA
+import { useState } from "react";
+
 function Oficinas(props) {
+  // filtros - adicionado por Khenny
+  const [busca, setBusca] = useState("");
+  const [avaliacaoMinima, setAvaliacaoMinima] = useState(0);
+  const [servicoFiltro, setServicoFiltro] = useState("");
+
+  const oficinasFiltradas = props.oficinas.filter((oficina) => {
+    const passaBusca = oficina.nome.toLowerCase().includes(busca.toLowerCase());
+    const passaAvaliacao =
+      !oficina.avaliacao || oficina.avaliacao >= avaliacaoMinima;
+    const passaServico =
+      servicoFiltro === "" ||
+      (oficina.especialidade || "")
+        .toLowerCase()
+        .includes(servicoFiltro.toLowerCase());
+    return passaBusca && passaAvaliacao && passaServico;
+  });
+
+  const limparFiltros = () => {
+    setBusca("");
+    setAvaliacaoMinima(0);
+    setServicoFiltro("");
+  };
+
   return (
     // div principal
     <div className="flex">
@@ -22,7 +48,9 @@ function Oficinas(props) {
             <h1 className="font-bold text-3xl text-black">Filtros</h1>
           </div>
 
-          <button className="text-sky-400">Limpar</button>
+          <button className="text-sky-400" onClick={limparFiltros}>
+            Limpar
+          </button>
         </div>
         {/* div filtro tipos de servico */}
         <div className="flex-col p-6 pt-10">
@@ -102,13 +130,18 @@ function Oficinas(props) {
           <h4 className="font-bold pb-4 text-gray-700">AVALIAÇAO MÍNIMA</h4>
           <div className="font-bold text-gray-800 border-b-2 pb-6">
             <div className="flex gap-2 pb-1">
+              {/*  aplicando mecanismo de filtro por avaliação, onde o usuário pode escolher a avaliação mínima que deseja ver nas oficinas listadas */}
               <Star className="text-yellow-300" />
               <Star className="text-yellow-300" />
               <Star className="text-yellow-300" />
               <Star className="text-yellow-300" />
               <Star className="text-yellow-300" />
-              <input type="checkbox" id="5" />
-              <label htmlFor="5"> 5 Estrelas</label>
+              <input
+                type="radio"
+                name="avaliacao"
+                onChange={() => setAvaliacaoMinima(5)}
+              />
+              <label> 5 Estrelas</label>
             </div>
             <div className="flex gap-2 pb-1">
               <Star className="text-yellow-300" />
@@ -116,8 +149,12 @@ function Oficinas(props) {
               <Star className="text-yellow-300" />
               <Star className="text-yellow-300" />
               <Star className="text-slate-400" />
-              <input type="checkbox" id="4" />
-              <label htmlFor="4"> 4 Estrelas +</label>
+              <input
+                type="radio"
+                name="avaliacao"
+                onChange={() => setAvaliacaoMinima(4)}
+              />
+              <label> 4 Estrelas +</label>
             </div>
             <div className="flex gap-2 pb-1">
               <Star className="text-yellow-300" />
@@ -125,8 +162,12 @@ function Oficinas(props) {
               <Star className="text-yellow-300" />
               <Star className="text-slate-400" />
               <Star className="text-slate-400" />
-              <input type="checkbox" id="3" />
-              <label htmlFor="3"> 3 Estrelas +</label>
+              <input
+                type="radio"
+                name="avaliacao"
+                onChange={() => setAvaliacaoMinima(3)}
+              />
+              <label> 3 Estrelas +</label>
             </div>
             <div className="flex gap-2 pb-1">
               <Star className="text-yellow-300" />
@@ -134,8 +175,12 @@ function Oficinas(props) {
               <Star className="text-slate-400" />
               <Star className="text-slate-400" />
               <Star className="text-slate-400" />
-              <input type="checkbox" id="2" />
-              <label htmlFor="2"> 2 Estrelas +</label>
+              <input
+                type="radio"
+                name="avaliacao"
+                onChange={() => setAvaliacaoMinima(2)}
+              />
+              <label> 2 Estrelas +</label>
             </div>
             <div className="flex gap-2 pb-1">
               <Star className="text-yellow-300" />
@@ -143,8 +188,12 @@ function Oficinas(props) {
               <Star className="text-slate-400" />
               <Star className="text-slate-400" />
               <Star className="text-slate-400" />
-              <input type="checkbox" id="1" />
-              <label htmlFor="1"> 1 Estrela +</label>
+              <input
+                type="radio"
+                name="avaliacao"
+                onChange={() => setAvaliacaoMinima(1)}
+              />
+              <label> 1 Estrela +</label>
             </div>
           </div>
         </div>
@@ -170,6 +219,8 @@ function Oficinas(props) {
                 className="bg-slate-50 w-96"
                 type="text"
                 placeholder="Buscar oficina por nome..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
               ></input>
             </div>
           </div>
@@ -188,7 +239,7 @@ function Oficinas(props) {
             {/* usei o chatgpt para me explicar o mapeamento oficinas e renderizar cada oficina dentro de um li
           referencia https://react.dev/learn/rendering-lists*/}
             {/* adicionei tbm a validacao de props pois vscode estava reclamado */}
-            {props.oficinas.map((oficina) => (
+            {oficinasFiltradas.map((oficina) => (
               <li className="p-4" key={oficina.id_oficina}>
                 <div className="shadow-md">
                   {/* componentes */}
@@ -207,10 +258,16 @@ function Oficinas(props) {
                       <p>{oficina.endereco}</p>
                     </div>
 
-                    <div className="flex p-1 pb-2">
-                      <p className="bg-slate-200 rounded-full p-2 border-0">
-                        {oficina.especialidade}
-                      </p>
+                    <div className="flex flex-wrap gap-1 p-1 pb-2">
+                      {/* aqui eu leio o mapeamento das especialidades. faço o split quando tme mais de um e mapeio o chave vs index */}
+                      {oficina.especialidade?.split(",").map((chave, index) => (
+                        <p
+                          key={index}
+                          className="bg-slate-200 text-black text-xs font-semibold rounded-full px-3 py-1 border-0 shadow-sm"
+                        >
+                          {props.mapaEspecialidades[chave.trim()] || chave}
+                        </p>
+                      ))}
                     </div>
                     <button className="border-2 w-full text-left text-gray-700 font-bold p-2 hover:bg-slate-700 hover:text-white">
                       <Link

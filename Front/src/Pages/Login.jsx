@@ -1,74 +1,79 @@
-//Por Khenny
+// UC06 - Sistema de Login - Khenny
 
-// Importa ferramentas do React para controlar dados e usar contexto
 import { useState, useContext } from "react";
-
-// Importa ferramentas para navegar entre páginas e criar links internos
 import { useNavigate, Link } from "react-router-dom";
-
-// Importa o contexto de autenticação (onde fica o login do usuário)
 import { AuthContext } from "../context/AuthContext";
 
 export default function Login() {
-  // Guarda os dados digitados no formulário
+  
+  // Guarda o que o usuário digita (email e senha)
   const [form, setForm] = useState({ email: "", senha: "" });
 
-  // Guarda mensagens de erro
+  // Guarda mensagem de erro para mostrar na tela
   const [erro, setErro] = useState("");
 
-  // Pega a função de login do contexto
+  // Controla se o botão está carregando (Entrando...)
+  const [loading, setLoading] = useState(false);
+
+  // Pega a função de login que vem do sistema de autenticação
   const { login } = useContext(AuthContext);
 
-  // Permite redirecionar o usuário para outra página
+  // Usado para mudar de página após o login
   const navigate = useNavigate();
 
-  // Função chamada quando o usuário digita nos campos
+  // Atualiza os campos quando o usuário digita
   const handleChange = (e) => {
-    // Atualiza o valor do campo que foi alterado
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Função executada quando o usuário clica em "Entrar"
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErro("");
+    setLoading(true);
 
     if (!form.email || !form.senha) {
       setErro("Preencha email e senha.");
+      setLoading(false);
       return;
     }
 
-    // ✅ CHAMADA REAL PARA O BACKEND
+    // Envia os dados para o backend verificar se o login está correto
     const resultado = await login(form.email, form.senha);
 
     if (resultado.success) {
-      navigate("/perfil");
+      // Redireciona o usuário conforme seu tipo
+      if (resultado.user?.tipo?.toUpperCase() === "ADMIN") {
+        navigate("/admin");
+      } else {
+        navigate("/perfil");
+      }
     } else {
       setErro(resultado.error || "Email ou senha incorretos.");
     }
+    
+    setLoading(false);
   };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-      {/* Caixa central do formulário */}
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-10">
-        {/* Título da página */}
+        
         <h1 className="text-3xl font-bold text-sky-700 mb-8 text-center">
           Entrar na conta
         </h1>
 
-        {/* Mostra mensagem de erro caso exista */}
+        {/* Mostra erro caso o login falhe */}
         {erro && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
             {erro}
           </div>
         )}
 
-        {/* Formulário de login */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Campo de email */}
+          
           <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Email
-            </label>
+            <label className="block text-gray-700 font-medium mb-2">Email</label>
             <input
               type="email"
               name="email"
@@ -80,11 +85,8 @@ export default function Login() {
             />
           </div>
 
-          {/* Campo de senha */}
           <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Senha
-            </label>
+            <label className="block text-gray-700 font-medium mb-2">Senha</label>
             <input
               type="password"
               name="senha"
@@ -96,22 +98,18 @@ export default function Login() {
             />
           </div>
 
-          {/* Botão para enviar o formulário */}
           <button
             type="submit"
-            className="w-full bg-sky-600 text-white py-3 rounded-lg font-semibold hover:bg-sky-700 transition shadow-md"
+            disabled={loading}
+            className="w-full bg-sky-600 text-white py-3 rounded-lg font-semibold hover:bg-sky-700 transition shadow-md disabled:opacity-70"
           >
-            Entrar
+            {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
 
-        {/* Link para página de cadastro */}
         <p className="text-center text-gray-600 mt-6">
           Ainda não tem conta?{" "}
-          <Link
-            to="/cadastro"
-            className="text-sky-600 hover:underline font-medium"
-          >
+          <Link to="/cadastro" className="text-sky-600 hover:underline font-medium">
             Cadastrar agora
           </Link>
         </p>

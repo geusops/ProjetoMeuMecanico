@@ -164,9 +164,10 @@ app.post("/usuarios", async (req, res) => {
 
     const sql = `INSERT INTO usuarios (nome, telefone, email, senha, tipo) VALUES (?, ?, ?, ?, ?)`;
 
+    // Alterado Khenny
     con.query(sql, [nome, telefone, email, senhaHash, tipo], (err, result) => {
       if (err) {
-        console.error("❌ Erro no banco ao cadastrar:", err); // ← Adicionado
+        console.error("❌ Erro no banco ao cadastrar:", err);
         if (err.code === "ER_DUP_ENTRY") {
           return res
             .status(409)
@@ -176,10 +177,25 @@ app.post("/usuarios", async (req, res) => {
           .status(500)
           .json({ error: "Erro interno ao cadastrar usuário" });
       }
-      console.log("✅ Usuário cadastrado com ID:", result.insertId);
+
+      // ✅ Insere automaticamente na tabela clientes
+      const novoId = result.insertId;
+      con.query(
+        "INSERT INTO clientes (id_cliente) VALUES (?)",
+        [novoId],
+        (err2) => {
+          if (err2)
+            console.error(
+              "⚠️ Aviso: não foi possível inserir em clientes:",
+              err2.message,
+            );
+        },
+      );
+
+      console.log("✅ Usuário cadastrado com ID:", novoId);
       res
         .status(201)
-        .json({ message: "Usuário criado com sucesso!", id: result.insertId });
+        .json({ message: "Usuário criado com sucesso!", id: novoId });
     });
   } catch (error) {
     console.error("❌ Erro ao hashear senha:", error);
@@ -187,6 +203,7 @@ app.post("/usuarios", async (req, res) => {
   }
 });
 
+// Backend/server.js (secção 3.5)
 app.post("/login", (req, res) => {
   console.log("📩 Recebida requisição de login");
   const { email, senha } = req.body;
@@ -203,9 +220,9 @@ app.post("/login", (req, res) => {
     if (!senhaValida) {
       return res.status(401).json({ error: "Email ou senha incorretos" });
     }
-
+    // alterado Khenny - aqui estamos gerando um token JWT que inclui o id, email e tipo do usuário. O token é assinado com uma chave secreta (definida em .env ou um valor padrão) e tem validade de 7 dias. Esse token pode ser usado pelo frontend para autenticar requisições futuras, permitindo acesso a rotas protegidas.
     const token = jwt.sign(
-      { id: user.id, email: user.email, tipo: user.tipo },
+      { id: user.id_usuario, email: user.email, tipo: user.tipo },
       process.env.JWT_SECRET || "secret_temp",
       { expiresIn: "7d" },
     );
@@ -213,13 +230,184 @@ app.post("/login", (req, res) => {
     res.json({
       message: "Login realizado com sucesso!",
       token,
+
+      //alterado Khenny - aqui estamos retornando também os dados do usuário (id, nome, email e tipo) para o frontend, além do token. Isso pode ser útil para exibir informações do usuário na interface ou para lógica de autorização baseada no tipo de usuário.
       user: {
-        id: user.id,
+        id: user.id_usuario,
         nome: user.nome,
         email: user.email,
         tipo: user.tipo,
       },
     });
+  });
+});
+
+// Rota de Cadastro de Oficina
+app.post("/oficinas", (req, res) => {
+  console.log("📩 Dados recebidos no cadastro de oficina:", req.body);
+
+  const {
+    nome,
+    telefone,
+    email,
+    endereco,
+    especialidade,
+    marcas,
+    latitude_oficina,
+    longitude_oficina,
+    id_mecanico,
+  } = req.body;
+
+  if (!nome || !endereco) {
+    return res.status(400).json({ error: "Nome e endereço são obrigatórios" });
+  }
+
+  // Vincula o ID do usuário na tabela intermediária 'mecanicos'
+  // O "INSERT IGNORE" garante que se ele cadastrar uma segunda oficina no futuro, não dará erro de duplicidade
+  const usuarioParaMecanico = `INSERT IGNORE INTO mecanicos (id_mecanico) VALUES (?)`;
+
+  // mandando a query pro banco para inserir o id do usuario na tabela mecanicos
+  con.query(usuarioParaMecanico, [id_mecanico], (errMecanico) => {
+    if (errMecanico) {
+      console.error("Erro ao ativar perfil de mecânico no banco:", errMecanico);
+      return res
+        .status(500)
+        .json({ error: "Erro ao processar perfil profissional do usuário." });
+    }
+
+    // Convert o usuario convencional para mecanico
+    con.query(
+      `UPDATE usuarios SET tipo = 'mecanico' WHERE id_usuario = ?`,
+      [id_mecanico],
+      (errUpdate) => {
+        if (errUpdate) {
+          console.error(
+            "Não foi possível atualizar o tipo do usuário para mecânico:",
+            errUpdate.message,
+          );
+        }
+      },
+    );
+
+    const sql = `INSERT INTO oficinas (nome, telefone, email, endereco, especialidade, marcas, latitude_oficina, longitude_oficina, id_mecanico) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    con.query(
+      sql,
+      [
+        nome,
+        telefone,
+        email,
+        endereco,
+        especialidade,
+        marcas,
+        latitude_oficina,
+        longitude_oficina,
+        id_mecanico,
+      ],
+      (err, result) => {
+        if (err) {
+          console.error("❌ Erro ao cadastrar oficina:", err);
+          return res
+            .status(500)
+            .json({ error: "Erro interno ao cadastrar oficina" });
+        }
+        console.log("✅ Oficina cadastrada com ID:", result.insertId);
+        res.status(201).json({
+          message: "Oficina cadastrada com sucesso!",
+          id: result.insertId,
+        });
+      },
+    );
+  });
+});
+
+// ADD Khenny
+app.post("/avaliacoes", (req, res) => {
+  console.log("📩 Avaliação recebida:", req.body);
+  const { id_cliente, id_oficina, nota, comentario, data } = req.body;
+
+  if (!id_cliente || !id_oficina || !nota) {
+    return res.status(400).json({ error: "Dados obrigatórios faltando" });
+  }
+
+  const sql = `INSERT INTO avaliacoes (id_cliente, id_oficina, nota, comentario, data) VALUES (?, ?, ?, ?, ?)`;
+  con.query(
+    sql,
+    [id_cliente, id_oficina, nota, comentario, data],
+    (err, result) => {
+      if (err) {
+        console.error("❌ Erro ao salvar avaliação:", err);
+        return res.status(500).json({ error: "Erro ao salvar avaliação" });
+      }
+      console.log("✅ Avaliação salva com ID:", result.insertId);
+      res.status(201).json({
+        message: "Avaliação enviada com sucesso!",
+        id: result.insertId,
+      });
+    },
+  );
+});
+
+// GET avaliacoes por oficina - Khenny
+app.get("/avaliacoes/:id_oficina", (req, res) => {
+  const { id_oficina } = req.params;
+  const sql = `
+    SELECT a.nota, a.comentario, a.data, u.nome 
+    FROM avaliacoes a
+    JOIN usuarios u ON a.id_cliente = u.id_usuario
+    WHERE a.id_oficina = ?
+    ORDER BY a.data DESC
+  `;
+  con.query(sql, [id_oficina], (err, result) => {
+    if (err) {
+      console.error("❌s Erro ao buscar avaliações:", err);
+      return res.status(500).json({ error: "Erro ao buscar avaliações" });
+    }
+    res.json({ avaliacoes: result });
+  });
+});
+
+// UC04 - Rotas Admin - Khenny
+
+// Listar todos os usuarios
+app.get("/admin/usuarios", (req, res) => {
+  con.query(
+    "SELECT id_usuario, nome, email, tipo FROM usuarios",
+    (err, result) => {
+      if (err)
+        return res.status(500).json({ error: "Erro ao buscar usuários" });
+      res.json({ usuarios: result });
+    },
+  );
+});
+
+// Deletar usuario
+app.delete("/admin/usuarios/:id", (req, res) => {
+  const { id } = req.params;
+  con.query("DELETE FROM usuarios WHERE id_usuario = ?", [id], (err) => {
+    if (err) return res.status(500).json({ error: "Erro ao deletar usuário" });
+    res.json({ message: "Usuário removido com sucesso!" });
+  });
+});
+
+// Listar todas as oficinas
+app.get("/admin/oficinas", (req, res) => {
+  con.query(
+    "SELECT id_oficina, nome, endereco, especialidade, email FROM oficinas",
+    (err, result) => {
+      if (err)
+        return res.status(500).json({ error: "Erro ao buscar oficinas" });
+      res.json({ oficinas: result });
+    },
+  );
+});
+
+// Deletar oficina
+app.delete("/admin/oficinas/:id", (req, res) => {
+  const { id } = req.params;
+  con.query("DELETE FROM oficinas WHERE id_oficina = ?", [id], (err) => {
+    if (err) return res.status(500).json({ error: "Erro ao deletar oficina" });
+    res.json({ message: "Oficina removida com sucesso!" });
   });
 });
 

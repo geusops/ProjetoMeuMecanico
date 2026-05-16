@@ -6,15 +6,20 @@ import {
   ArrowLeft,
   CircleCheck,
 } from "lucide-react";
-import { useState } from "react";
-import { NavLink, Link } from "react-router-dom";
+import { useState, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
-function CadastrarOfina() {
+function CadastrarOficina() {
+  //
+  // INÍCIO - bloco dos sets e states
+  //
+
   // checa qual botao esta ativo
-  const [ativo, setAtivo] = useState("minha_oficina");
-  console.log(ativo);
-
-  //para usar a api da via cep, criei esse objeto para armazenar os dados do endereco e setar o conteudo os campos
+  const [ativo, setAtivo] = useState("minha_oficina"); // Estado do endereço (CEP, rua, etc)
+  const [servicos, setServicos] = useState([]); // ref aos checkboxes de serviços
+  const [marcas, setMarcas] = useState([]); // ref aos checkboxes de marcas
   const [endereco, setEndereco] = useState({
     cep: "",
     rua: "",
@@ -23,14 +28,100 @@ function CadastrarOfina() {
     bairro: "",
     cidade: "",
     estado: "",
-  });
+  }); // ref o formulario de endereco para envio ao backend
+
+  // estado para os campos da oficina - adicionado para envio ao backend
+  const [form, setForm] = useState({ nome: "", email: "", telefone: "" });
+  const [mensagem, setMensagem] = useState("");
+
+  //
+  // FIM - bloco dos sets e states
+  //
+
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // https://www.w3schools.com/react/react_forms_checkbox.asp
+  // https://dev.to/collegewap/how-to-work-with-checkboxes-in-react-44bc
+  // handler para os checkboxes de serviços.
+  const handleServico = (e) => {
+    const { value, checked } = e.target;
+    if (checked) {
+      setServicos([...servicos, value]); // aqui a gente adiciona o serviço selecionado no array de serviço
+    } else {
+      setServicos(servicos.filter((item) => item !== value));
+    }
+  };
+
+  // handler para os checkboxes de marcas.
+  const handleMarca = (e) => {
+    const { value, checked } = e.target;
+    if (checked) {
+      setMarcas([...marcas, value]); // aqui a gente adiciona o serviço selecionado no array de marcas
+    } else {
+      setMarcas(marcas.filter((item) => item !== value));
+    }
+  };
+
+  console.log("Usuário logado:", user);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMensagem("");
+    const enderecoCompleto = `${endereco.rua}, ${endereco.numero || "s/n"} - ${endereco.bairro}, ${endereco.cidade} - ${endereco.estado}, Brasil`;
+    try {
+      // convertendo CEP em coordenadas via OpenStreetMap
+      let lat = null;
+      let lon = null;
+      try {
+        const geo = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${endereco.cep},Brasil&countrycodes=br&email=geuso002@gmail.com`,
+        ); // aqui nós fazemos a requisicao para a API passando o cep como query.
+        // precisei add meu email pessoa pq requisicao assim o openstreemaps nao aceita e dava um erro de CORS:
+        // https://operations.osmfoundation.org/policies/nominatim/#requirements
+        const geoData = await geo.json();
+        console.log(geoData);
+        if (geoData.length > 0) {
+          lat = parseFloat(geoData[0].lat);
+          lon = parseFloat(geoData[0].lon);
+        }
+        //com o retorno da api pegamos as coordenadas e atribuimos a lat e lon
+        console.log("Coordenadas obtidas:", lat, lon);
+      } catch (e) {
+        console.log("Não foi possível obter coordenadas", e.Message);
+      }
+
+      await axios.post("http://localhost:3000/oficinas", {
+        nome: form.nome,
+        email: form.email,
+        telefone: form.telefone,
+        endereco: enderecoCompleto,
+        especialidade: servicos.join(","), // aqui a gente junta os serviços caso haja mais que um selecionado
+        marcas: marcas.join(","), // aqui a gente junta os marcas caso haja mais que um selecionado
+        latitude_oficina: lat,
+        longitude_oficina: lon,
+        id_mecanico: user?.id || 1,
+      });
+      setMensagem("✅ Oficina cadastrada com sucesso!");
+      setTimeout(() => navigate("/home"), 2000);
+    } catch (error) {
+      setMensagem("❌ Erro ao cadastrar. Tente novamente.");
+      console.error(error);
+    }
+  };
 
   //referencia:
   //https://www.youtube.com/watch?v=155ywtYSpdY
   const consultaCEP = (e) => {
     const cep = e.target.value.replace(/\D/g, "");
-    console.log(cep);
-    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+
+    if (!cep) return;
+
+    fetch(`https://viacep.com.br/ws/${cep}/json`)
       .then((res) => res.json())
       .then((data) => {
         setEndereco({
@@ -162,6 +253,8 @@ function CadastrarOfina() {
                         placeholder="Ex: Auto Mecânica Silva"
                         className="w-full px-4 py-3 bg-slate-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                         required
+                        value={form.nome}
+                        onChange={handleFormChange}
                       />
                     </div>
                   </div>
@@ -180,6 +273,8 @@ function CadastrarOfina() {
                         placeholder="contato@oficina.com"
                         className="w-full px-4 py-3 bg-slate-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                         required
+                        value={form.email}
+                        onChange={handleFormChange}
                       />
                     </div>
                   </div>
@@ -195,9 +290,11 @@ function CadastrarOfina() {
                       <input
                         type="text"
                         name="telefone"
-                        placeholder="Ex: Auto Mecânica Silva"
+                        placeholder="(11) 91234-5678)"
                         className="w-full px-4 py-3 bg-slate-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                         required
+                        value={form.telefone}
+                        onChange={handleFormChange}
                       />
                     </div>
                   </div>
@@ -210,7 +307,7 @@ function CadastrarOfina() {
                       <input
                         type="text"
                         name="nome"
-                        placeholder="Ex: Auto Mecânica Silva"
+                        placeholder="00.123.456/0001-00"
                         className="w-full px-4 py-3 bg-slate-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                         required
                       />
@@ -267,36 +364,76 @@ function CadastrarOfina() {
                 </h4>
                 <div className="text-gray-600 pb-6 grid grid-cols-3">
                   <div className="pb-1">
-                    <input type="checkbox" id="motor" />
+                    <input
+                      type="checkbox"
+                      id="motor"
+                      value="e1"
+                      onChange={handleServico}
+                    />
                     <label htmlFor="motor"> Motor e Transmissão</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="freios" />
+                    <input
+                      type="checkbox"
+                      id="freios"
+                      value="e2"
+                      onChange={handleServico}
+                    />
                     <label htmlFor="freios"> Freios e Suspensão</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="eletrica" />
+                    <input
+                      type="checkbox"
+                      id="eletrica"
+                      value="e3"
+                      onChange={handleServico}
+                    />
                     <label htmlFor="eletrica"> Elétrica e Baterias</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="ar" />
+                    <input
+                      type="checkbox"
+                      id="ar"
+                      value="e4"
+                      onChange={handleServico}
+                    />
                     <label htmlFor="ar"> Ar-Condicionado</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="pneus" />
+                    <input
+                      type="checkbox"
+                      id="pneus"
+                      value="e5"
+                      onChange={handleServico}
+                    />
                     <label htmlFor="pneus"> Pneus e Alinhamento</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="troca-oleo" />
-                    <label htmlFor="pneus"> Troca de óleo</label>
+                    <input
+                      type="checkbox"
+                      id="troca-oleo"
+                      value="e6"
+                      onChange={handleServico}
+                    />
+                    <label htmlFor="troca-oleo"> Troca de óleo</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="ingecao" />
-                    <label htmlFor="pneus"> Ingeção eletrônica</label>
+                    <input
+                      type="checkbox"
+                      id="ingecao"
+                      value="e7"
+                      onChange={handleServico}
+                    />
+                    <label htmlFor="ingecao"> Injeção eletrônica</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="pintura" />
-                    <label htmlFor="pneus"> Pintura e Funilaria</label>
+                    <input
+                      type="checkbox"
+                      id="pintura"
+                      value="e8"
+                      onChange={handleServico}
+                    />
+                    <label htmlFor="pintura"> Pintura e Funilaria</label>
                   </div>
                 </div>
               </div>
@@ -310,36 +447,76 @@ function CadastrarOfina() {
                 </div>
                 <div className="text-gray-600 pb-6 grid grid-cols-3">
                   <div className="pb-1">
-                    <input type="checkbox" id="motor" />
-                    <label htmlFor="motor"> Motor e Transmissão</label>
+                    <input
+                      type="checkbox"
+                      id="chevrolet"
+                      value="m1"
+                      onChange={handleMarca}
+                    />
+                    <label htmlFor="chevrolet"> Chevrolet</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="freios" />
-                    <label htmlFor="freios"> Freios e Suspensão</label>
+                    <input
+                      type="checkbox"
+                      id="vw"
+                      value="m2"
+                      onChange={handleMarca}
+                    />
+                    <label htmlFor="vw"> Volkswagen</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="eletrica" />
-                    <label htmlFor="eletrica"> Elétrica e Baterias</label>
+                    <input
+                      type="checkbox"
+                      id="fiat"
+                      value="m3"
+                      onChange={handleMarca}
+                    />
+                    <label htmlFor="fiat"> Fiat</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="ar" />
-                    <label htmlFor="ar"> Ar-Condicionado</label>
+                    <input
+                      type="checkbox"
+                      id="honda"
+                      value="m4"
+                      onChange={handleMarca}
+                    />
+                    <label htmlFor="honda"> Honda</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="pneus" />
-                    <label htmlFor="pneus"> Pneus e Alinhamento</label>
+                    <input
+                      type="checkbox"
+                      id="toyota"
+                      value="m5"
+                      onChange={handleMarca}
+                    />
+                    <label htmlFor="toyota"> Toyota</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="troca-oleo" />
-                    <label htmlFor="pneus"> Troca de óleo</label>
+                    <input
+                      type="checkbox"
+                      id="nissan"
+                      value="m6"
+                      onChange={handleMarca}
+                    />
+                    <label htmlFor="nissan"> Nissan</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="ingecao" />
-                    <label htmlFor="pneus"> Ingeção eletrônica</label>
+                    <input
+                      type="checkbox"
+                      id="renault"
+                      value="m7"
+                      onChange={handleMarca}
+                    />
+                    <label htmlFor="renault"> Renault</label>
                   </div>
                   <div className="pb-1">
-                    <input type="checkbox" id="pintura" />
-                    <label htmlFor="pneus"> Pintura e Funilaria</label>
+                    <input
+                      type="checkbox"
+                      id="outros"
+                      value="m8"
+                      onChange={handleMarca}
+                    />
+                    <label htmlFor="outros"> Outros</label>
                   </div>
                 </div>
               </div>
@@ -545,11 +722,18 @@ function CadastrarOfina() {
                 <p>Voltar para home</p>
               </Link>
             </div>
+
+            {/* mensagem de feedback */}
+            {mensagem && <p className="font-semibold text-lg">{mensagem}</p>}
+
             <div className="flex gap-6">
               <button className="flex rounded-sm px-6 py-2 text-gray-700 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
                 Descartar alteraçoes
               </button>
-              <button className="flex gap-2 rounded-sm px-6 py-2 bg-sky-500 text-white shadow hover:bg-slate-700 transition">
+              <button
+                onClick={handleSubmit}
+                className="flex gap-2 rounded-sm px-6 py-2 bg-sky-500 text-white shadow hover:bg-slate-700 transition"
+              >
                 <CircleCheck />
                 Finalizar cadastro
               </button>
@@ -560,4 +744,4 @@ function CadastrarOfina() {
     </div>
   );
 }
-export default CadastrarOfina;
+export default CadastrarOficina;
