@@ -121,6 +121,7 @@ function App() {
           element={
             <Oficinas
               oficinas={oficinas}
+              setQuantidadeLimite={setQuantidadeLimite}
               mapaEspecialidades={MAPA_ESPECIALIDADES} // mandando o mapeamento das especialidades para a pag de oficinas
               mapaMarcas={MAPA_MARCAS}
             />

@@ -25,18 +25,6 @@ function RecenterMap({ position }) {
   return null;
 }
 
-// Dicionário para converter as chaves do banco de dados na marca real
-// const MAPA_MARCAS = {
-//   m1: "Chevrolet",
-//   m2: "Volkswagen",
-//   m3: "Fiat",
-//   m4: "Honda",
-//   m5: "Toyota",
-//   m6: "Nissan",
-//   m7: "Renault",
-//   m8: "Outros",
-// };
-
 function HomePage(props) {
   const [draggable, setDraggable] = useState(true); // Começa como arrastável
   const [visualizacao, setVisualizacao] = useState("lista"); // visualizacao padrao é a lista
