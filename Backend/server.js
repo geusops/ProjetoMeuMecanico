@@ -148,7 +148,8 @@ app.get("/", (req, res) => {
 
 // Rota de Cadastro - Khenny
 app.post("/usuarios", async (req, res) => {
-  console.log("📩 Cadastro recebido - Email:", req.body.email); // Senha oculta por segurança
+  console.log("📩 Dados recebidos no cadastro:", req.body); // ← Adicionado para debug
+
   const { nome, telefone, email, senha, tipo = "cliente" } = req.body;
 
   if (!nome || !email || !senha) {
@@ -163,26 +164,39 @@ app.post("/usuarios", async (req, res) => {
 
     const sql = `INSERT INTO usuarios (nome, telefone, email, senha, tipo) VALUES (?, ?, ?, ?, ?)`;
 
-// Alterado Khenny
-       con.query(sql, [nome, telefone, email, senhaHash, tipo], (err, result) => {
-     if (err) {
-       console.error("❌ Erro no banco ao cadastrar:", err);
-       if (err.code === "ER_DUP_ENTRY") {
-         return res.status(409).json({ error: "Este email já está cadastrado" });
-       }
-        return res.status(500).json({ error: "Erro interno ao cadastrar usuário" });
+    // Alterado Khenny
+    con.query(sql, [nome, telefone, email, senhaHash, tipo], (err, result) => {
+      if (err) {
+        console.error("❌ Erro no banco ao cadastrar:", err);
+        if (err.code === "ER_DUP_ENTRY") {
+          return res
+            .status(409)
+            .json({ error: "Este email já está cadastrado" });
+        }
+        return res
+          .status(500)
+          .json({ error: "Erro interno ao cadastrar usuário" });
       }
 
       // ✅ Insere automaticamente na tabela clientes
       const novoId = result.insertId;
-      con.query("INSERT INTO clientes (id_cliente) VALUES (?)", [novoId], (err2) => {
-        if (err2) console.error("⚠️ Aviso: não foi possível inserir em clientes:", err2.message);
-      });
+      con.query(
+        "INSERT INTO clientes (id_cliente) VALUES (?)",
+        [novoId],
+        (err2) => {
+          if (err2)
+            console.error(
+              "⚠️ Aviso: não foi possível inserir em clientes:",
+              err2.message,
+            );
+        },
+      );
 
       console.log("✅ Usuário cadastrado com ID:", novoId);
-      res.status(201).json({ message: "Usuário criado com sucesso!", id: novoId });
+      res
+        .status(201)
+        .json({ message: "Usuário criado com sucesso!", id: novoId });
     });
-
   } catch (error) {
     console.error("❌ Erro ao hashear senha:", error);
     res.status(500).json({ error: "Erro ao processar cadastro" });
@@ -191,8 +205,9 @@ app.post("/usuarios", async (req, res) => {
 
 // Backend/server.js (secção 3.5)
 app.post("/login", (req, res) => {
- console.log("📩 Tentativa de login - Email:", req.body.email);
-   const { email, senha } = req.body;
+  console.log("📩 Recebida requisição de login");
+  const { email, senha } = req.body;
+
   const sql = "SELECT * FROM usuarios WHERE email = ?";
   con.query(sql, [email], async (err, results) => {
     if (err || results.length === 0) {
@@ -205,9 +220,9 @@ app.post("/login", (req, res) => {
     if (!senhaValida) {
       return res.status(401).json({ error: "Email ou senha incorretos" });
     }
-// alterado Khenny - aqui estamos gerando um token JWT que inclui o id, email e tipo do usuário. O token é assinado com uma chave secreta (definida em .env ou um valor padrão) e tem validade de 7 dias. Esse token pode ser usado pelo frontend para autenticar requisições futuras, permitindo acesso a rotas protegidas.
+    // alterado Khenny - aqui estamos gerando um token JWT que inclui o id, email e tipo do usuário. O token é assinado com uma chave secreta (definida em .env ou um valor padrão) e tem validade de 7 dias. Esse token pode ser usado pelo frontend para autenticar requisições futuras, permitindo acesso a rotas protegidas.
     const token = jwt.sign(
-  { id: user.id_usuario, email: user.email, tipo: user.tipo },
+      { id: user.id_usuario, email: user.email, tipo: user.tipo },
       process.env.JWT_SECRET || "secret_temp",
       { expiresIn: "7d" },
     );
@@ -231,21 +246,78 @@ app.post("/login", (req, res) => {
 app.post("/oficinas", (req, res) => {
   console.log("📩 Dados recebidos no cadastro de oficina:", req.body);
 
-  const { nome, telefone, email, endereco, especialidade, latitude_oficina, longitude_oficina, id_mecanico } = req.body;
+  const {
+    nome,
+    telefone,
+    email,
+    endereco,
+    especialidade,
+    marcas,
+    latitude_oficina,
+    longitude_oficina,
+    id_mecanico,
+  } = req.body;
 
   if (!nome || !endereco) {
     return res.status(400).json({ error: "Nome e endereço são obrigatórios" });
   }
 
-  const sql = `INSERT INTO oficinas (nome, telefone, email, endereco, especialidade, latitude_oficina, longitude_oficina, id_mecanico) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+  // Vincula o ID do usuário na tabela intermediária 'mecanicos'
+  // O "INSERT IGNORE" garante que se ele cadastrar uma segunda oficina no futuro, não dará erro de duplicidade
+  const usuarioParaMecanico = `INSERT IGNORE INTO mecanicos (id_mecanico) VALUES (?)`;
 
-  con.query(sql, [nome, telefone, email, endereco, especialidade, latitude_oficina, longitude_oficina, id_mecanico], (err, result) => {
-    if (err) {
-      console.error("❌ Erro ao cadastrar oficina:", err);
-      return res.status(500).json({ error: "Erro interno ao cadastrar oficina" });
+  // mandando a query pro banco para inserir o id do usuario na tabela mecanicos
+  con.query(usuarioParaMecanico, [id_mecanico], (errMecanico) => {
+    if (errMecanico) {
+      console.error("Erro ao ativar perfil de mecânico no banco:", errMecanico);
+      return res
+        .status(500)
+        .json({ error: "Erro ao processar perfil profissional do usuário." });
     }
-    console.log("✅ Oficina cadastrada com ID:", result.insertId);
-    res.status(201).json({ message: "Oficina cadastrada com sucesso!", id: result.insertId });
+
+    // Convert o usuario convencional para mecanico
+    con.query(
+      `UPDATE usuarios SET tipo = 'mecanico' WHERE id_usuario = ?`,
+      [id_mecanico],
+      (errUpdate) => {
+        if (errUpdate) {
+          console.error(
+            "Não foi possível atualizar o tipo do usuário para mecânico:",
+            errUpdate.message,
+          );
+        }
+      },
+    );
+
+    const sql = `INSERT INTO oficinas (nome, telefone, email, endereco, especialidade, marcas, latitude_oficina, longitude_oficina, id_mecanico) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    con.query(
+      sql,
+      [
+        nome,
+        telefone,
+        email,
+        endereco,
+        especialidade,
+        marcas,
+        latitude_oficina,
+        longitude_oficina,
+        id_mecanico,
+      ],
+      (err, result) => {
+        if (err) {
+          console.error("❌ Erro ao cadastrar oficina:", err);
+          return res
+            .status(500)
+            .json({ error: "Erro interno ao cadastrar oficina" });
+        }
+        console.log("✅ Oficina cadastrada com ID:", result.insertId);
+        res.status(201).json({
+          message: "Oficina cadastrada com sucesso!",
+          id: result.insertId,
+        });
+      },
+    );
   });
 });
 
@@ -259,14 +331,21 @@ app.post("/avaliacoes", (req, res) => {
   }
 
   const sql = `INSERT INTO avaliacoes (id_cliente, id_oficina, nota, comentario, data) VALUES (?, ?, ?, ?, ?)`;
-  con.query(sql, [id_cliente, id_oficina, nota, comentario, data], (err, result) => {
-    if (err) {
-      console.error("❌ Erro ao salvar avaliação:", err);
-      return res.status(500).json({ error: "Erro ao salvar avaliação" });
-    }
-    console.log("✅ Avaliação salva com ID:", result.insertId);
-    res.status(201).json({ message: "Avaliação enviada com sucesso!", id: result.insertId });
-  });
+  con.query(
+    sql,
+    [id_cliente, id_oficina, nota, comentario, data],
+    (err, result) => {
+      if (err) {
+        console.error("❌ Erro ao salvar avaliação:", err);
+        return res.status(500).json({ error: "Erro ao salvar avaliação" });
+      }
+      console.log("✅ Avaliação salva com ID:", result.insertId);
+      res.status(201).json({
+        message: "Avaliação enviada com sucesso!",
+        id: result.insertId,
+      });
+    },
+  );
 });
 
 // GET avaliacoes por oficina - Khenny
@@ -292,10 +371,14 @@ app.get("/avaliacoes/:id_oficina", (req, res) => {
 
 // Listar todos os usuarios
 app.get("/admin/usuarios", (req, res) => {
-  con.query("SELECT id_usuario, nome, email, tipo FROM usuarios", (err, result) => {
-    if (err) return res.status(500).json({ error: "Erro ao buscar usuários" });
-    res.json({ usuarios: result });
-  });
+  con.query(
+    "SELECT id_usuario, nome, email, tipo FROM usuarios",
+    (err, result) => {
+      if (err)
+        return res.status(500).json({ error: "Erro ao buscar usuários" });
+      res.json({ usuarios: result });
+    },
+  );
 });
 
 // Deletar usuario
@@ -309,10 +392,14 @@ app.delete("/admin/usuarios/:id", (req, res) => {
 
 // Listar todas as oficinas
 app.get("/admin/oficinas", (req, res) => {
-  con.query("SELECT id_oficina, nome, endereco, especialidade, email FROM oficinas", (err, result) => {
-    if (err) return res.status(500).json({ error: "Erro ao buscar oficinas" });
-    res.json({ oficinas: result });
-  });
+  con.query(
+    "SELECT id_oficina, nome, endereco, especialidade, email FROM oficinas",
+    (err, result) => {
+      if (err)
+        return res.status(500).json({ error: "Erro ao buscar oficinas" });
+      res.json({ oficinas: result });
+    },
+  );
 });
 
 // Deletar oficina

@@ -286,10 +286,15 @@ function HomePage(props) {
                       <p>{oficina.endereco}</p>
                     </div>
 
-                    <div className="flex p-1 pb-2">
-                      <p className="bg-slate-200 rounded-full p-2 border-0">
-                        {oficina.especialidade}
-                      </p>
+                    <div className="flex flex-wrap gap-1 p-1 pb-2">
+                      {oficina.especialidade?.split(",").map((chave, index) => (
+                        <p
+                          key={index}
+                          className="bg-slate-200 text-black text-xs font-semibold rounded-full px-3 py-1 border-0 shadow-sm"
+                        >
+                          {props.mapaEspecialidades[chave.trim()] || chave}
+                        </p>
+                      ))}
                     </div>
                     <button className="border-2 w-full text-left text-gray-700 font-bold p-2 hover:bg-slate-700 hover:text-white">
                       <Link
@@ -338,13 +343,13 @@ function HomePage(props) {
             novos clientes na sua região todos os meses.
           </p>
         </div>
-      <div className="p-10 content-center">
-        <Link to="/cadastraroficina">
-          <button className="rounded-md font-bold text-2xl bg-slate-50 px-20 h-20 text-sky-500 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
-            Cadastrar Minha Oficina
-          </button>
-        </Link>
-      </div>
+        <div className="p-10 content-center">
+          <Link to="/oficinas/cadastrar">
+            <button className="rounded-md font-bold text-2xl bg-slate-50 px-20 h-20 text-sky-500 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
+              Cadastrar Minha Oficina
+            </button>
+          </Link>
+        </div>
       </div>
     </div>
   );

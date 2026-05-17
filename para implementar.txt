@@ -1,0 +1,5 @@
+- Implementar o Google Oauth
+- Usar elasticsearch + react
+- Infinite Scrolling react
+- Organizar rotas
+- https://eui.elastic.co/
