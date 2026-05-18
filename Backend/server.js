@@ -7,10 +7,13 @@ import path from "path";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { Client as ESClient } from "@elastic/elasticsearch";
 
 dotenv.config();
 
 const app = express();
+
+const esClient = new ESClient({ node: "http://localhost:9200" });
 
 //usado pra ter a capacidade de receber objetos json
 app.use(express.json());
@@ -64,24 +67,96 @@ con.connect(function (err) {
 
 //testando novo modelo de busca - Geu
 
-app.get("/oficinas", (req, res) => {
-  // Pegamos os valores da URL. Ex: /oficinas?lat=-23.54&lon=-46.45&raio=20
-  const { lat, lon, raio } = req.query;
+// //testando novo modelo de busca - Geu (versão original MySQL, substituída pela versão com Elasticsearch abaixo)
+// app.get("/oficinas", (req, res) => {
+//   // Pegamos os valores da URL. Ex: /oficinas?lat=-23.54&lon=-46.45&raio=20
+//   const { lat, lon, raio } = req.query;
+//
+//   // conversando dos valores para float
+//   const userLat = parseFloat(lat);
+//   const userLon = parseFloat(lon);
+//   const searchRaio = parseFloat(raio) || 10; // definindo 10km como padrão
+//
+//   // Query para calcular a distancia das oficinas e filtrando pelo raio usando a função ST_Distance_Sphere no MySQL.
+//   //https://dev.mysql.com/doc/refman/8.4/en/spatial-convenience-functions.html
+//
+//   // Aqui, a função ST_Distance_Sphere calcular a distancia entre dois pontos (point 1 e point 2). Nesse caso, um dos pontos é a localização da oficina (longitude_oficina e latitude_oficina) e o outro é a localização que vamos mandar, podendo ser a localizacao do usuário ou um placeholder fixo. HAVING distancia_km <= ? é usando para filtrar e trazer oficinas que estejam dentro de um raio definido. O resultado é ordenado pela distancia.
+//   const sql = `
+//     SELECT
+//         * ,
+//         (ST_Distance_Sphere(
+//             point(longitude_oficina, latitude_oficina),
+//             point(?, ?)
+//         ) / 1000) AS distancia_km
+//     FROM oficinas
+//     HAVING distancia_km <= ?
+//     ORDER BY distancia_km ASC
+//   `;
+//
+//   // Importante ressaltar que nessa funcao, a longitude vem antes da latitude. Isso é um padrao do MySQL.
+//   con.query(sql, [userLon, userLat, searchRaio], (err, result) => {
+//     if (err) {
+//       console.error("Erro na busca:", err);
+//       return res.status(500).json({ error: "Erro interno no servidor" });
+//     }
+//     res.json({ output_consulta: result });
+//   });
+// });
 
-  // conversando dos valores para float
+// Versão com Elasticsearch - quando q está presente usa ES; sem q mantém MySQL geo-distância
+app.get("/oficinas", async (req, res) => {
+  const { lat, lon, raio, q } = req.query;
+
   const userLat = parseFloat(lat);
   const userLon = parseFloat(lon);
-  const searchRaio = parseFloat(raio) || 10; // definindo 10km como padrão
+  const searchRaio = parseFloat(raio) || 10;
 
-  // Query para calcular a distancia das oficinas e filtrando pelo raio usando a função ST_Distance_Sphere no MySQL.
-  //https://dev.mysql.com/doc/refman/8.4/en/spatial-convenience-functions.html
+  // Com termo de busca: usa Elasticsearch com multi_match + analyzer português
+  if (q && q.trim()) {
+    try {
+      const filtroGeo = !isNaN(userLat) && !isNaN(userLon)
+        ? [{ geo_distance: { distance: `${searchRaio}km`, location: { lat: userLat, lon: userLon } } }]
+        : [];
 
-  // Aqui, a função ST_Distance_Sphere calcular a distancia entre dois pontos (point 1 e point 2). Nesse caso, um dos pontos é a localização da oficina (longitude_oficina e latitude_oficina) e o outro é a localização que vamos mandar, podendo ser a localizacao do usuário ou um placeholder fixo. HAVING distancia_km <= ? é usando para filtrar e trazer oficinas que estejam dentro de um raio definido. O resultado é ordenado pela distancia.
+      const resultado = await esClient.search({
+        index: "oficinas",
+        size: 50,
+        query: {
+          bool: {
+            must: {
+              multi_match: {
+                query: q,
+                fields: ["nome^2", "especialidade", "marcas", "endereco"],
+                fuzziness: "AUTO",
+              },
+            },
+            filter: filtroGeo,
+          },
+        },
+        sort: filtroGeo.length
+          ? [{ _geo_distance: { location: { lat: userLat, lon: userLon }, order: "asc", unit: "km" } }]
+          : ["_score"],
+      });
+
+      const output_consulta = resultado.hits.hits.map((hit) => ({
+        ...hit._source,
+        distancia_km: hit.sort?.[0] ?? null,
+      }));
+
+      return res.json({ output_consulta });
+    } catch (err) {
+      console.error("Erro na busca ES:", err);
+      return res.status(500).json({ error: "Erro na busca Elasticsearch" });
+    }
+  }
+
+  // Sem termo de busca: mantém a busca geográfica via MySQL
+  // Importante ressaltar que nessa funcao, a longitude vem antes da latitude. Isso é um padrao do MySQL.
   const sql = `
-    SELECT 
+    SELECT
         * ,
         (ST_Distance_Sphere(
-            point(longitude_oficina, latitude_oficina), 
+            point(longitude_oficina, latitude_oficina),
             point(?, ?)
         ) / 1000) AS distancia_km
     FROM oficinas
@@ -89,7 +164,6 @@ app.get("/oficinas", (req, res) => {
     ORDER BY distancia_km ASC
   `;
 
-  // Importante ressaltar que nessa funcao, a longitude vem antes da latitude. Isso é um padrao do MySQL.
   con.query(sql, [userLon, userLat, searchRaio], (err, result) => {
     if (err) {
       console.error("Erro na busca:", err);

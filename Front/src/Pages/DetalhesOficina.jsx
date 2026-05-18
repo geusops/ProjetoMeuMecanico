@@ -2,7 +2,7 @@ import {
   ArrowLeft,
   Car,
   CircleCheck,
-  Clock,
+  Mail,
   MapPin,
   MessageSquareX,
   PhoneIcon,
@@ -45,6 +45,8 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
   const [nota, setNota] = useState(5);
   const [comentario, setComentario] = useState("");
   const [mensagemAvaliacao, setMensagemAvaliacao] = useState("");
+  // Adicione essa linha junto com os outros states (perto do mostrarForm, nota, etc.)
+  const [servicoSelecionado, setServicoSelecionado] = useState(""); // state pra guardar o servico que o usuario selecionou e usar para o formulario de orçamento
 
   // busca as avaliacoes da oficina - Khenny
   const [avaliacoes, setAvaliacoes] = useState([]);
@@ -87,6 +89,25 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
     return <h2>Oficina não encontrada</h2>;
   }
 
+  //funcao para solcitar orcamento
+  const handleSolicitarOrcamento = () => {
+    //caso o botao seja pressionado sem que o usuario tenha escolhido o servico
+    if (!servicoSelecionado) {
+      alert("Por favor, selecione um serviço antes de solicitar o orçamento!");
+      return;
+    }
+
+    console.log("Chave do serviço selecionado:", servicoSelecionado);
+    console.log("ID da oficina:", oficinaSelecionada.id_oficina);
+
+    // Exemplo de redirecionamento para a página do formulário levando a chave e a oficina na URL:
+    // navigate(`/orcamento?oficina=${oficinaSelecionada.id_oficina}&servico=${servicoSelecionado}`);
+
+    // Ou se for abrir um modal/outro formulário na mesma página, coloque a lógica aqui.
+    alert(
+      `Iniciando orçamento para o serviço: ${mapaEspecialidades[servicoSelecionado]}`,
+    );
+  };
   return (
     // div de fundo
     <div>
@@ -266,27 +287,66 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
           </div>
           {/* painel direita */}
           <div className="bg-slate-100 rounded-md p-6 mt-2">
-            <h1 className="font-bold text-2xl text-black text-center">
-              Onde Estamos
-            </h1>
-            {/* endereco */}
-            <div className="flex gap-2 p-2 text-gray-700sm">
-              <MapPin className="text-sky-500" />
-              <p>{oficinaSelecionada.endereco}</p>
+            {/* informacoes de contato */}
+            <div className="margin-bottom-4 border-b border-gray-300 pb-4">
+              <h1 className="font-bold text-2xl text-black text-center pb-4">
+                Informações de Contato
+              </h1>
+              {/* endereco */}
+              <div className="flex gap-2 p-2 text-gray-700sm items-center">
+                <MapPin className="text-sky-500" />
+                <p>{oficinaSelecionada.endereco}</p>
+              </div>
+              {/* telefone */}
+              <div className="flex gap-2 p-2 text-gray-700sm items-center">
+                <PhoneIcon className="text-sky-500" />
+                <p>{oficinaSelecionada.telefone}</p>
+              </div>
+              {/* horario */}
+              <div className="flex gap-2 p-2 text-gray-700sm items-center">
+                <Mail className="text-sky-500" />
+                <p>{oficinaSelecionada.email}</p>
+              </div>
             </div>
-            {/* telefone */}
-            <div className="flex gap-2 p-2 text-gray-700">
-              <PhoneIcon className="text-sky-500" />
-              <p>{oficinaSelecionada.telefone}</p>
+            <div className="pt-4">
+              <div className="flex flex-col gap-3 border-b border-gray-300 text-center">
+                <label className="font-bold text-lgs text-black text-center">
+                  Selecione o serviço desejado:
+                </label>
+                <select
+                  value={servicoSelecionado}
+                  onChange={(e) => setServicoSelecionado(e.target.value)}
+                  className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    Escolha um serviço
+                  </option>
+                  {oficinaSelecionada.especialidade ? (
+                    oficinaSelecionada.especialidade
+                      .split(",")
+                      .map((chave) => chave.trim())
+                      .filter((chave) => mapaEspecialidades[chave]) // Garante que existe no mapa
+                      .map((chave) => (
+                        <option key={chave} value={chave}>
+                          {mapaEspecialidades[chave]}
+                        </option>
+                      ))
+                  ) : (
+                    <option disabled>Nenhum serviço disponível</option>
+                  )}
+                </select>
+              </div>
+
+              <div className="pt-4 px-4">
+                <button
+                  className="w-full flex gap-2 items-center justify-center rounded-md text-lg bg-sky-500 py-2 text-sky-50 border border-transparent shadow hover:bg-slate-700 transition font-bold"
+                  onClick={handleSolicitarOrcamento}
+                >
+                  Solicitar Orçamento
+                </button>
+              </div>
             </div>
-            {/* horario */}
-            <div className="flex gap-2 p-2 text-gray-700sm">
-              <Clock className="text-sky-500" />
-              <p>{oficinaSelecionada.horario}</p>
-            </div>
-            <button className="flex gap-2 items-center rounded-md text-lg bg-sky-500 px-10 h-10 text-sky-50 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
-              Solicitar Orçamento
-            </button>
           </div>
         </div>
       </div>

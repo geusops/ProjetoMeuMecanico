@@ -9,7 +9,7 @@ import {
 import { Link } from "react-router-dom";
 
 // Khenny filtros de busca aprimorada com Claude.IA
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function Oficinas(props) {
   // filtros - adicionado por Khenny
@@ -30,9 +30,18 @@ function Oficinas(props) {
     }
   };
 
+  // Debounce: aguarda 300ms após o usuário parar de digitar para chamar o Elasticsearch via backend
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      props.onBuscar(busca);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [busca]);
+
   // logica do filtro
   const oficinasFiltradas = props.oficinas.filter((oficina) => {
-    const passaBusca = oficina.nome.toLowerCase().includes(busca.toLowerCase());
+    // passaBusca comentado — a busca por texto agora é feita no Elasticsearch (backend)
+    // const passaBusca = oficina.nome.toLowerCase().includes(busca.toLowerCase());
     //avaliacao
     const passaAvaliacao =
       !oficina.avaliacao || oficina.avaliacao >= avaliacaoMinima;
@@ -50,7 +59,8 @@ function Oficinas(props) {
       marcasSelecionadas.length === 0 ||
       marcasSelecionadas.some((m) => marcasOficina.includes(m));
 
-    return passaBusca && passaAvaliacao && passaServico && passaMarca;
+    // passaBusca removido do filtro local — agora é tratado pelo Elasticsearch no backend
+    return passaAvaliacao && passaServico && passaMarca;
   });
 
   // funcao pra limpar os filtros
@@ -211,10 +221,11 @@ function Oficinas(props) {
         <div className="flex">
           <div className=" w-3/6">
             <h2 className="text-3xl text-black font-bold text-left">
-              Oficinas em São Paulo
+              Oficinas disponíveis na sua região
             </h2>
             <p className="text-gray-600 text-md text-left">
-              Encontramos 6 oficinas mecânicas especializadas para você.
+              Encontramos {oficinasFiltradas.length} oficinas mecânicas
+              especializadas para você.
             </p>
           </div>
           <div className="flex gap-2 items-center pl-2 pr-2 w-3/6 justify-end">
