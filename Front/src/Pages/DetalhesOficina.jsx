@@ -15,6 +15,13 @@ import { Link, useParams } from "react-router-dom";
 import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import axios from "axios";
+//formulario
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import TextField from "@mui/material/TextField";
 
 //funcao pra renderizar os cards de serviços da oficina
 export function ServiceCard({ titulo, descricao }) {
@@ -47,6 +54,7 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
   const [mensagemAvaliacao, setMensagemAvaliacao] = useState("");
   // Adicione essa linha junto com os outros states (perto do mostrarForm, nota, etc.)
   const [servicoSelecionado, setServicoSelecionado] = useState(""); // state pra guardar o servico que o usuario selecionou e usar para o formulario de orçamento
+  const [open, setOpen] = useState(false); // state pra controlar a abertura do formulario de orcamento
 
   // busca as avaliacoes da oficina - Khenny
   const [avaliacoes, setAvaliacoes] = useState([]);
@@ -84,30 +92,101 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
     }
   };
 
+  //definindo o formulario de orcamento
+  const [form, setForm] = useState({
+    nome: "",
+    telefone: "",
+    email: "",
+    servicoDesejado: "",
+    descricao: "",
+  });
+
+  // Guarda mensagens de erro
+  const [erro, setErro] = useState("");
+
   console.log({ oficinaSelecionada });
   if (!oficinaSelecionada) {
     return <h2>Oficina não encontrada</h2>;
   }
 
-  //funcao para solcitar orcamento
+  // Função para solicitar orçamento
   const handleSolicitarOrcamento = () => {
-    //caso o botao seja pressionado sem que o usuario tenha escolhido o servico
     if (!servicoSelecionado) {
       alert("Por favor, selecione um serviço antes de solicitar o orçamento!");
       return;
     }
 
-    console.log("Chave do serviço selecionado:", servicoSelecionado);
-    console.log("ID da oficina:", oficinaSelecionada.id_oficina);
+    // 💡 SOLUÇÃO: Atualiza o formulário com o serviço que o usuário acabou de escolher
+    setForm((prev) => ({
+      ...prev,
+      servicoDesejado: servicoSelecionado,
+    }));
 
-    // Exemplo de redirecionamento para a página do formulário levando a chave e a oficina na URL:
-    // navigate(`/orcamento?oficina=${oficinaSelecionada.id_oficina}&servico=${servicoSelecionado}`);
-
-    // Ou se for abrir um modal/outro formulário na mesma página, coloque a lógica aqui.
-    alert(
-      `Iniciando orçamento para o serviço: ${mapaEspecialidades[servicoSelecionado]}`,
-    );
+    handleAbreFormuario();
   };
+
+  //funcao para abrir o formulario
+  const handleAbreFormuario = () => {
+    setOpen(true);
+  };
+
+  //funcao para fechar o formulario
+  const handleFechaFormuario = () => {
+    setOpen(false);
+    setErro(""); // Limpa erros ao fechar
+  };
+
+  // Função essencial para capturar o que o usuário digita nos inputs
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErro("");
+
+    if (!form.nome || !form.telefone || !form.email || !form.servicoDesejado) {
+      setErro("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    try {
+      const response = await axios.post("http://localhost:3000/orcamentos", {
+        nome: form.nome,
+        telefone: form.telefone,
+        email: form.email,
+        servicoDesejado: form.servicoDesejado,
+        descricao: form.descricao,
+        id_oficina: parseInt(id),
+      });
+
+      if (response.status === 201) {
+        // Limpa o formulário e o select principal
+        setForm({
+          nome: "",
+          telefone: "",
+          email: "",
+          servicoDesejado: "",
+          descricao: "",
+        });
+        setServicoSelecionado("");
+
+        // Fecha o modal após o sucesso
+        handleFechaFormuario();
+        alert("Orçamento enviado com sucesso!");
+      }
+    } catch (error) {
+      console.error("Erro ao enviar orçamento:", error);
+      setErro(
+        error.response?.data?.erro || "Erro ao processar sua solicitação.",
+      );
+    }
+  };
+
   return (
     // div de fundo
     <div>
@@ -308,6 +387,7 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
                 <p>{oficinaSelecionada.email}</p>
               </div>
             </div>
+            {/* formulario de orcamento */}
             <div className="pt-4">
               <div className="flex flex-col gap-3 border-b border-gray-300 text-center">
                 <label className="font-bold text-lgs text-black text-center">
@@ -346,6 +426,128 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
                   Solicitar Orçamento
                 </button>
               </div>
+              {/* referencia:
+              https://mui.com/material-ui/react-dialog/#form-dialogs
+              https://www.youtube.com/watch?v=mcx9WBnNc1k
+               */}
+              <Dialog open={open}>
+                <DialogTitle className="font-bold text-center">
+                  Formulário de Orçamento
+                </DialogTitle>
+                <DialogContent>
+                  <form onSubmit={handleSubmit}>
+                    <DialogContent className="space-y-4">
+                      <DialogContentText className="mb-4">
+                        Preencha os dados abaixo para solicitar o orçamento de{" "}
+                        <strong>
+                          {mapaEspecialidades[servicoSelecionado]}
+                        </strong>
+                        .
+                      </DialogContentText>
+                      {erro && (
+                        <p className="text-red-500 font-semibold text-sm bg-red-50 p-2 rounded border border-red-200">
+                          {erro}
+                        </p>
+                      )}
+
+                      {/* Campo nome */}
+                      <div>
+                        <div className="flex">
+                          <label className="block text-gray-700 font-medium mb-1">
+                            Nome completo
+                          </label>
+                          <p className="text-red-600">*</p>
+                        </div>
+                        <input
+                          type="text"
+                          name="nome"
+                          value={form.nome}
+                          onChange={handleChange}
+                          placeholder="Ex: João da Silva"
+                          className="w-full px-4 py-2 bg-slate-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          required
+                        />
+                      </div>
+
+                      {/* Campo telefone */}
+                      <div>
+                        <div className="flex">
+                          <label className="block text-gray-700 font-medium mb-1">
+                            Telefone
+                          </label>
+                          <p className="text-red-600">*</p>
+                        </div>
+                        <input
+                          type="tel"
+                          name="telefone"
+                          value={form.telefone}
+                          onChange={handleChange}
+                          placeholder="Ex: (11) 99999-9999"
+                          className="w-full px-4 py-2 bg-slate-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          required
+                        />
+                      </div>
+
+                      {/* Campo email (Apenas UM) */}
+                      <div>
+                        <div className="flex">
+                          <label className="block text-gray-700 font-medium mb-1">
+                            E-mail
+                          </label>
+                          <p className="text-red-600">*</p>
+                        </div>
+                        <div className="relative">
+                          <Mail
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                            size={18}
+                          />
+                          <input
+                            type="email"
+                            name="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            placeholder="seu@email.com"
+                            className="w-full pl-10 px-4 py-2 bg-slate-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {/* Campo Descrição/Detalhes do Problema (Opcional, mas bom ter já que está no estado) */}
+                      <div>
+                        <label className="block text-gray-700 font-medium mb-1">
+                          Detalhes do problema (Opcional)
+                        </label>
+                        <textarea
+                          name="descricao"
+                          value={form.descricao}
+                          onChange={handleChange}
+                          placeholder="Descreva brevemente o que o seu carro apresenta..."
+                          className="w-full px-4 py-2 bg-slate-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          rows={3}
+                        />
+                      </div>
+                    </DialogContent>
+
+                    {/* Botões alinhados corretamente usando o padrão do Material UI */}
+                    <DialogActions className="p-4 bg-gray-50 border-t gap-2">
+                      <button
+                        type="button"
+                        className="px-4 py-2 text-gray-500 hover:bg-gray-200 rounded-md transition font-semibold"
+                        onClick={handleFechaFormuario}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        className="bg-sky-500 text-white px-5 py-2 rounded-md font-semibold hover:bg-sky-600 transition shadow-sm"
+                      >
+                        Enviar Orçamento
+                      </button>
+                    </DialogActions>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>

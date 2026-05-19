@@ -114,9 +114,17 @@ app.get("/oficinas", async (req, res) => {
   // Com termo de busca: usa Elasticsearch com multi_match + analyzer português
   if (q && q.trim()) {
     try {
-      const filtroGeo = !isNaN(userLat) && !isNaN(userLon)
-        ? [{ geo_distance: { distance: `${searchRaio}km`, location: { lat: userLat, lon: userLon } } }]
-        : [];
+      const filtroGeo =
+        !isNaN(userLat) && !isNaN(userLon)
+          ? [
+              {
+                geo_distance: {
+                  distance: `${searchRaio}km`,
+                  location: { lat: userLat, lon: userLon },
+                },
+              },
+            ]
+          : [];
 
       const resultado = await esClient.search({
         index: "oficinas",
@@ -134,7 +142,15 @@ app.get("/oficinas", async (req, res) => {
           },
         },
         sort: filtroGeo.length
-          ? [{ _geo_distance: { location: { lat: userLat, lon: userLon }, order: "asc", unit: "km" } }]
+          ? [
+              {
+                _geo_distance: {
+                  location: { lat: userLat, lon: userLon },
+                  order: "asc",
+                  unit: "km",
+                },
+              },
+            ]
           : ["_score"],
       });
 
@@ -442,6 +458,44 @@ app.get("/avaliacoes/:id_oficina", (req, res) => {
 });
 
 // UC04 - Rotas Admin - Khenny
+
+// Rota para receber solicitações de orçamento
+app.post("/orcamentos", (req, res) => {
+  const { nome, telefone, email, servicoDesejado, descricao, id_oficina } =
+    req.body;
+
+  // Validação no servidor
+  if (!nome || !telefone || !email || !servicoDesejado || !id_oficina) {
+    return res
+      .status(400)
+      .json({ erro: "Todos os campos obrigatórios devem ser preenchidos." });
+  }
+
+  // Alinhando as variáveis com as colunas criadas no banco de dados
+  const sql = `
+        INSERT INTO orcamentos (nome, telefone, email, servico_desejado, descricao, id_oficina) 
+        VALUES (?, ?, ?, ?, ?, ?)
+    `;
+
+  // Executa a query utilizando sua conexão do MySQL (ex: db ou conexao)
+  con.query(
+    sql,
+    [nome, telefone, email, servicoDesejado, descricao || null, id_oficina],
+    (err, result) => {
+      if (err) {
+        console.error("Erro ao salvar orçamento no MySQL:", err);
+        return res
+          .status(500)
+          .json({ erro: "Erro interno no servidor ao processar o orçamento." });
+      }
+
+      return res.status(201).json({
+        mensagem: "Orçamento cadastrado com sucesso!",
+        id_orcamento: result.insertId,
+      });
+    },
+  );
+});
 
 // Listar todos os usuarios
 app.get("/admin/usuarios", (req, res) => {
