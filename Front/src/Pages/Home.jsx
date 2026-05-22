@@ -14,6 +14,9 @@ import { Link } from "react-router-dom"; // ← adicionado esta linha
 import { MapContainer, TileLayer, Popup, Marker, useMap } from "react-leaflet"; //trabalhanodo com os mapas
 import "leaflet/dist/leaflet.css"; //estilo do mapa
 
+import L from "leaflet";
+import marker from "../assets/marker-icon-red.png"; //icone do marcador
+
 import { useState, useRef, useMemo, useEffect, useCallback } from "react"; // usado para o "toggle"
 //import Location from "../Hooks/Location";
 
@@ -81,6 +84,14 @@ function HomePage(props) {
   const toggleDraggable = useCallback(() => {
     setDraggable((d) => !d);
   }, []);
+
+  const redIcon = new L.Icon({
+    iconUrl: marker,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+  });
 
   // tentando conectar a API nodejs
   //referencia: https://www.youtube.com/watch?v=mKmxc8TcWQ8
@@ -238,12 +249,16 @@ function HomePage(props) {
                 eventHandlers={eventHandlers}
                 position={d_position}
                 ref={markerRef}
+                icon={redIcon}
               >
                 <Popup minWidth={90}>
                   <span onClick={toggleDraggable}>
+                    <div className="flex text-black font-bold text-center justify-center mb-1">
+                      Você está aqui
+                    </div>
                     {draggable
-                      ? "Marker is draggable"
-                      : "Click here to make marker draggable"}
+                      ? "Mova o marcador para atualizar a busca"
+                      : "Clique aqui para arrastar o marcardor"}
                   </span>
                 </Popup>
               </Marker>
@@ -257,7 +272,31 @@ function HomePage(props) {
                     oficina.longitude_oficina,
                   ]}
                 >
-                  <Popup>{oficina.nome}</Popup>
+                  <Popup>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-1 pb-2">
+                        <h1 className="text-black text-lg font-semibold mr-1">
+                          {oficina.nome}
+                        </h1>
+
+                        {oficina.especialidade
+                          ?.split(",")
+                          .map((chave, index) => (
+                            <span key={index} className="text-black">
+                              {"-"}{" "}
+                              {props.mapaEspecialidades[chave.trim()] || chave}
+                            </span>
+                          ))}
+                      </div>
+                      <Link
+                        className="text-sky-500 hover:text-gray-700"
+                        to={`/oficinas/${oficina.id_oficina}`}
+                      >
+                        {" "}
+                        Ver Detalhes
+                      </Link>
+                    </div>
+                  </Popup>
                 </Marker>
               ))}
             </MapContainer>
@@ -317,6 +356,7 @@ function HomePage(props) {
           </ul>
         )}
       </div>
+
       {/* Seletor de Quantidade */}
       <div className="flex h-15 gap-2 rounded-lg py-2 px-2 justify-center m-12 border-b-2">
         <label className="text-gray-600 font-medium">Mostrar:</label>
