@@ -133,13 +133,19 @@ function CadastrarOficina({ mapaEspecialidades }) {
         email: form.email,
         telefone: form.telefone,
         endereco: enderecoCompleto,
+
+        uf: endereco.estado,
+        cidade: endereco.cidade,
+        bairro: endereco.bairro,
+
         marcas: marcas.join(","),
-        servicos: listaServicosPrecos, // Enviando a estrutura em lote com os preços para o backend Node
+        servicos: listaServicosPrecos,
+
         latitude_oficina: lat,
         longitude_oficina: lon,
+
         id_usuario: user?.id,
       });
-
       setMensagem("✅ Oficina cadastrada com sucesso!");
       setTimeout(() => navigate("/home"), 2000);
     } catch (error) {

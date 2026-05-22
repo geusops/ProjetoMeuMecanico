@@ -384,19 +384,23 @@ app.post("/oficinas", (req, res) => {
     );
 
     const sql = `
-      INSERT INTO oficinas 
-      (
-        nome,
-        telefone,
-        email,
-        endereco,
-        especialidade,
-        marcas,
-        latitude_oficina,
-        longitude_oficina,
-        id_mecanico
-      ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO oficinas (
+  nome,
+  foto_path,
+  endereco,
+  telefone,
+  email,
+  id_mecanico,
+  especialidade,
+  marcas,
+  descricao,
+  latitude_oficina,
+  longitude_oficina,
+  uf,
+  cidade,
+  bairro
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     con.query(
@@ -544,6 +548,33 @@ app.post("/avaliacoes", (req, res) => {
       });
     },
   );
+});
+
+// Buscar serviços da oficina
+app.get("/oficinas/:id/servicos", (req, res) => {
+  const { id } = req.params;
+
+  const sql = `
+    SELECT 
+      id_servico,
+      nome_servico,
+      descricao,
+      preco_medio
+    FROM servicos
+    WHERE id_oficina = ?
+  `;
+
+  con.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error("❌ Erro ao buscar serviços:", err);
+
+      return res.status(500).json({
+        error: "Erro ao buscar serviços",
+      });
+    }
+
+    res.json({ servicos: result });
+  });
 });
 
 // GET avaliacoes por oficina - Khenny

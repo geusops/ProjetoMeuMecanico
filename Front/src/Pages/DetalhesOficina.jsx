@@ -24,17 +24,22 @@ import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 
 //funcao pra renderizar os cards de serviços da oficina
-export function ServiceCard({ titulo, descricao }) {
-  // aqui eu faco o render dos cards
+export function ServiceCard({ titulo, descricao, preco }) {
   return (
     <div className="flex items-start gap-4 p-4 shadow-sm border border-gray-100 rounded-xl bg-white hover:shadow-md transition">
       <div className="bg-sky-100 p-3 rounded-lg">
         <CircleCheck size={28} className="text-sky-600" />
       </div>
-      <div>
+
+      <div className="w-full">
         <h3 className="text-gray-900 font-bold text-lg">{titulo}</h3>
-        <p className="text-gray-500 text-sm">
+
+        <p className="text-gray-500 text-sm mt-1">
           {descricao || "Serviço especializado com garantia."}
+        </p>
+
+        <p className="text-sky-600 font-bold text-sm mt-2">
+          R$ {Number(preco).toFixed(2).replace(".", ",")}
         </p>
       </div>
     </div>
@@ -58,6 +63,19 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
 
   // busca as avaliacoes da oficina - Khenny
   const [avaliacoes, setAvaliacoes] = useState([]);
+
+  const [servicos, setServicos] = useState([]);
+
+  useEffect(() => {
+    if (oficinaSelecionada) {
+      axios
+        .get(
+          `http://localhost:3000/oficinas/${oficinaSelecionada.id_oficina}/servicos`,
+        )
+        .then((res) => setServicos(res.data.servicos))
+        .catch((err) => console.error(err));
+    }
+  }, [oficinaSelecionada]);
 
   useEffect(() => {
     if (oficinaSelecionada) {
@@ -317,17 +335,25 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
               </div>
               {/* mapeando os servicos */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                {oficinaSelecionada.especialidade
-                  ?.split(",")
-                  .map((chave) => chave.trim())
-                  .filter((chave) => mapaEspecialidades[chave]) // Só renderiza se a chave existir no mapa
-                  .map((chave) => (
+                {servicos.length > 0 ? (
+                  servicos.map((servico) => (
                     <ServiceCard
-                      key={chave}
-                      titulo={mapaEspecialidades[chave]}
-                      descricao={`Especialistas em ${mapaEspecialidades[chave].toLowerCase()}.`}
+                      key={servico.id_servico}
+                      titulo={servico.nome_servico}
+                      descricao={servico.descricao}
+                      preco={servico.preco_medio}
                     />
-                  ))}
+                  ))
+                ) : (
+                  <p className="text-gray-500 italic">
+                    Nenhum serviço cadastrado para esta oficina.
+                  </p>
+                )}
+              </div>
+
+              <div className="pt-4 text-gray-400 italic">
+                Se interessou por um serviço? Solicite um orçamento no menu ao
+                lado!
               </div>
             </section>
             {/* marcas atendidas */}

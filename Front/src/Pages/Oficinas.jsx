@@ -20,6 +20,29 @@ function Oficinas(props) {
   const [avaliacaoMinima, setAvaliacaoMinima] = useState(0);
   const [servicosSelecionados, setServicosSelecionados] = useState([]);
   const [marcasSelecionadas, setMarcasSelecionadas] = useState([]);
+  const [ufSelecionada, setUfSelecionada] = useState("");
+  const [cidadeSelecionada, setCidadeSelecionada] = useState("");
+  const [bairroSelecionado, setBairroSelecionado] = useState("");
+
+  //dropdowns
+  const ufs = [...new Set(props.oficinas.map((o) => o.uf).filter(Boolean))];
+  const cidades = [
+    ...new Set(
+      props.oficinas
+        .filter((o) => o.uf === ufSelecionada)
+        .map((o) => o.cidade)
+        .filter(Boolean),
+    ),
+  ];
+
+  const bairros = [
+    ...new Set(
+      props.oficinas
+        .filter((o) => o.uf === ufSelecionada && o.cidade === cidadeSelecionada)
+        .map((o) => o.bairro)
+        .filter(Boolean),
+    ),
+  ];
 
   // funcao ler os checkbox de filtro de servicos e atualizar a lista de filtros aplicados
   const handleFiltroCheck = (id, lista, setLista) => {
@@ -58,9 +81,24 @@ function Oficinas(props) {
     const passaMarca =
       marcasSelecionadas.length === 0 ||
       marcasSelecionadas.some((m) => marcasOficina.includes(m));
+    // localização
+    const passaUF = !ufSelecionada || oficina.uf === ufSelecionada;
+
+    const passaCidade =
+      !cidadeSelecionada || oficina.cidade === cidadeSelecionada;
+
+    const passaBairro =
+      !bairroSelecionado || oficina.bairro === bairroSelecionado;
 
     // passaBusca removido do filtro local — agora é tratado pelo Elasticsearch no backend
-    return passaAvaliacao && passaServico && passaMarca;
+    return (
+      passaAvaliacao &&
+      passaServico &&
+      passaMarca &&
+      passaUF &&
+      passaCidade &&
+      passaBairro
+    );
   });
 
   // funcao pra limpar os filtros
@@ -70,6 +108,9 @@ function Oficinas(props) {
     setServicoFiltro("");
     setServicosSelecionados([]);
     setMarcasSelecionadas([]);
+    setUfSelecionada("");
+    setCidadeSelecionada("");
+    setBairroSelecionado("");
   };
 
   return (
@@ -88,6 +129,66 @@ function Oficinas(props) {
           <button className="text-sky-400" onClick={limparFiltros}>
             Limpar
           </button>
+        </div>
+        {/* div filtro localização */}
+        <div className="flex-col p-6 pt-2">
+          <h4 className="font-bold pb-4 text-gray-700">LOCALIZAÇÃO</h4>
+
+          <div className="border-b-2 pb-6 flex flex-col gap-3">
+            {/* UF */}
+            <select
+              value={ufSelecionada}
+              onChange={(e) => {
+                setUfSelecionada(e.target.value);
+                setCidadeSelecionada("");
+                setBairroSelecionado("");
+              }}
+              className="bg-white border border-gray-300 rounded-md p-2 text-gray-700"
+            >
+              <option value="">Todos os estados</option>
+
+              {ufs.map((uf) => (
+                <option key={uf} value={uf}>
+                  {uf}
+                </option>
+              ))}
+            </select>
+
+            {/* Cidade */}
+            <select
+              value={cidadeSelecionada}
+              onChange={(e) => {
+                setCidadeSelecionada(e.target.value);
+                setBairroSelecionado("");
+              }}
+              className="bg-white border border-gray-300 rounded-md p-2 text-gray-700"
+              disabled={!ufSelecionada}
+            >
+              <option value="">Todas as cidades</option>
+
+              {cidades.map((cidade) => (
+                <option key={cidade} value={cidade}>
+                  {cidade}
+                </option>
+              ))}
+            </select>
+
+            {/* Bairro */}
+            <select
+              value={bairroSelecionado}
+              onChange={(e) => setBairroSelecionado(e.target.value)}
+              className="bg-white border border-gray-300 rounded-md p-2 text-gray-700"
+              disabled={!cidadeSelecionada}
+            >
+              <option value="">Todos os bairros</option>
+
+              {bairros.map((bairro) => (
+                <option key={bairro} value={bairro}>
+                  {bairro}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         {/* div filtro tipos de servico */}
         <div className="flex-col p-6 pt-10">
