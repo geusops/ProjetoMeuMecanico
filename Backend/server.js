@@ -343,9 +343,10 @@ app.post("/oficinas", (req, res) => {
     endereco,
     especialidade,
     marcas,
+    servicos,
     latitude_oficina,
     longitude_oficina,
-    id_mecanico,
+    id_usuario, // alterado: agora recebemos o ID do usuário logado
   } = req.body;
 
   if (!nome || !endereco) {
@@ -354,21 +355,24 @@ app.post("/oficinas", (req, res) => {
 
   // Vincula o ID do usuário na tabela intermediária 'mecanicos'
   // O "INSERT IGNORE" garante que se ele cadastrar uma segunda oficina no futuro, não dará erro de duplicidade
-  const usuarioParaMecanico = `INSERT IGNORE INTO mecanicos (id_mecanico) VALUES (?)`;
+  const usuarioParaMecanico = `
+    INSERT INTO mecanicos (id_usuario)
+    VALUES (?)
+  `;
 
-  // mandando a query pro banco para inserir o id do usuario na tabela mecanicos
-  con.query(usuarioParaMecanico, [id_mecanico], (errMecanico) => {
-    if (errMecanico) {
-      console.error("Erro ao ativar perfil de mecânico no banco:", errMecanico);
-      return res
-        .status(500)
-        .json({ error: "Erro ao processar perfil profissional do usuário." });
-    }
+  // verifica se o usuário já possui perfil de mecânico
+  const buscaMecanico = `
+    SELECT id_mecanico
+    FROM mecanicos
+    WHERE id_usuario = ?
+  `;
 
+  // função responsável por criar a oficina após obter o id_mecanico real
+  const criarOficina = (idMecanicoReal) => {
     // Convert o usuario convencional para mecanico
     con.query(
       `UPDATE usuarios SET tipo = 'mecanico' WHERE id_usuario = ?`,
-      [id_mecanico],
+      [id_usuario],
       (errUpdate) => {
         if (errUpdate) {
           console.error(
@@ -379,7 +383,21 @@ app.post("/oficinas", (req, res) => {
       },
     );
 
-    const sql = `INSERT INTO oficinas (nome, telefone, email, endereco, especialidade, marcas, latitude_oficina, longitude_oficina, id_mecanico) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const sql = `
+      INSERT INTO oficinas 
+      (
+        nome,
+        telefone,
+        email,
+        endereco,
+        especialidade,
+        marcas,
+        latitude_oficina,
+        longitude_oficina,
+        id_mecanico
+      ) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
     con.query(
       sql,
@@ -392,22 +410,112 @@ app.post("/oficinas", (req, res) => {
         marcas,
         latitude_oficina,
         longitude_oficina,
-        id_mecanico,
+        idMecanicoReal,
       ],
       (err, result) => {
         if (err) {
           console.error("❌ Erro ao cadastrar oficina:", err);
-          return res
-            .status(500)
-            .json({ error: "Erro interno ao cadastrar oficina" });
+
+          return res.status(500).json({
+            error: "Erro interno ao cadastrar oficina",
+          });
         }
-        console.log("✅ Oficina cadastrada com ID:", result.insertId);
-        res.status(201).json({
-          message: "Oficina cadastrada com sucesso!",
-          id: result.insertId,
-        });
+
+        const idOficina = result.insertId;
+
+        console.log("✅ Oficina cadastrada com ID:", idOficina);
+
+        // Inserção dos serviços vinculados à oficina
+        if (Array.isArray(servicos) && servicos.length > 0) {
+          const sqlServicos = `
+            INSERT INTO servicos 
+            (
+              nome_servico,
+              descricao,
+              preco_medio,
+              id_oficina
+            )
+            VALUES ?
+          `;
+
+          const valoresServicos = servicos.map((servico) => [
+            servico.nomeServico,
+            servico.descricao,
+            parseFloat(servico.precoMedio) || 0,
+            idOficina,
+          ]);
+
+          con.query(sqlServicos, [valoresServicos], (errServicos) => {
+            if (errServicos) {
+              console.error("❌ Erro ao cadastrar serviços:", errServicos);
+
+              return res.status(500).json({
+                error: "Oficina cadastrada, mas houve erro ao salvar serviços.",
+              });
+            }
+
+            console.log("✅ Serviços cadastrados com sucesso!");
+
+            return res.status(201).json({
+              message: "Oficina e serviços cadastrados com sucesso!",
+              id: idOficina,
+            });
+          });
+        } else {
+          return res.status(201).json({
+            message: "Oficina cadastrada sem serviços.",
+            id: idOficina,
+          });
+        }
       },
     );
+  };
+
+  // verifica se já existe um mecânico vinculado a esse usuário
+  con.query(buscaMecanico, [id_usuario], (errBusca, resultBusca) => {
+    if (errBusca) {
+      console.error("Erro ao buscar mecânico:", errBusca);
+
+      return res.status(500).json({
+        error: "Erro ao verificar perfil de mecânico.",
+      });
+    }
+
+    // se já existir, reutiliza o id_mecanico existente
+    if (resultBusca.length > 0) {
+      const idMecanicoExistente = resultBusca[0].id_mecanico;
+
+      console.log(
+        "ℹ️ Usuário já possui perfil de mecânico:",
+        idMecanicoExistente,
+      );
+
+      criarOficina(idMecanicoExistente);
+    } else {
+      // mandando a query pro banco para inserir o id do usuario na tabela mecanicos
+      con.query(
+        usuarioParaMecanico,
+        [id_usuario],
+        (errMecanico, resultMecanico) => {
+          if (errMecanico) {
+            console.error(
+              "Erro ao ativar perfil de mecânico no banco:",
+              errMecanico,
+            );
+
+            return res.status(500).json({
+              error: "Erro ao processar perfil profissional do usuário.",
+            });
+          }
+
+          const idMecanicoCriado = resultMecanico.insertId;
+
+          console.log("✅ Perfil de mecânico criado:", idMecanicoCriado);
+
+          criarOficina(idMecanicoCriado);
+        },
+      );
+    }
   });
 });
 

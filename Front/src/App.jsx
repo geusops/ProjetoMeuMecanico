@@ -46,23 +46,29 @@ function App() {
 
   // Usamos useCallback para a função não ser recriada "do zero" toda hora
   // Agora aceita q (termo de busca) para enviar ao Elasticsearch via backend
-  const fetchAPI = useCallback(async (lat = -23.5489, lon = -46.6388, q = "") => {
-    try {
-      const response = await axios.get("http://localhost:3000/oficinas", {
-        params: { lat, lon, raio: 20, ...(q ? { q } : {}) },
-      });
-      setOficinas(response.data.output_consulta);
-    } catch (erro) {
-      console.error("Erro ao buscar oficinas: ", erro);
-    }
-  }, []); // Array vazio aqui indica que a função é estável
+  const fetchAPI = useCallback(
+    async (lat = -23.5489, lon = -46.6388, q = "") => {
+      try {
+        const response = await axios.get("http://localhost:3000/oficinas", {
+          params: { lat, lon, raio: 20, ...(q ? { q } : {}) },
+        });
+        setOficinas(response.data.output_consulta);
+      } catch (erro) {
+        console.error("Erro ao buscar oficinas: ", erro);
+      }
+    },
+    [],
+  ); // Array vazio aqui indica que a função é estável
 
   // Chamada pela caixa de busca em Oficinas.jsx — envia o termo para o Elasticsearch
-  const handleBuscar = useCallback((termo) => {
-    const lat = coords?.lat ?? -23.5489;
-    const lon = coords?.lon ?? -46.6388;
-    fetchAPI(lat, lon, termo);
-  }, [coords, fetchAPI]);
+  const handleBuscar = useCallback(
+    (termo) => {
+      const lat = coords?.lat ?? -23.5489;
+      const lon = coords?.lon ?? -46.6388;
+      fetchAPI(lat, lon, termo);
+    },
+    [coords, fetchAPI],
+  );
 
   // fetch inicial, para popular a home com as oficinais mais proximas das coordenadas iniciais.
   useEffect(() => {
@@ -164,7 +170,13 @@ function App() {
         <Route path="/perfil" element={<Perfil />} />
         <Route
           path="/oficinas/cadastrar"
-          element={user ? <CadastrarOficina /> : <Navigate to="/login" />}
+          element={
+            user ? (
+              <CadastrarOficina mapaEspecialidades={MAPA_ESPECIALIDADES} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
         />
 
         {/* NOVA ROTA - UC04 */}
