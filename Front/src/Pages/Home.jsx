@@ -85,6 +85,11 @@ function HomePage(props) {
     setDraggable((d) => !d);
   }, []);
 
+  //cor do marcador personalizada
+  //https://react-leaflet.js.org/docs/example-popup-marker/
+  // https://leafletjs.com/reference.html#marker-option
+  //https://gis.stackexchange.com/questions/350186/changing-circle-marker-color-in-leaflet
+
   const redIcon = new L.Icon({
     iconUrl: marker,
     iconSize: [25, 41],

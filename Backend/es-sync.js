@@ -1,3 +1,6 @@
+//arquivo para sincronizar os dados do MySQL com o Elasticsearch
+//esse arquivo deve ser executado sempre que houverem atualizacoes no banco de dados.
+
 import { Client } from "@elastic/elasticsearch";
 import mysql from "mysql";
 
@@ -26,16 +29,16 @@ con.connect((err) => {
     const operations = rows.flatMap((row) => [
       { index: { _index: "oficinas", _id: String(row.id_oficina) } },
       {
-        id_oficina:    row.id_oficina,
-        nome:          row.nome,
-        endereco:      row.endereco,
+        id_oficina: row.id_oficina,
+        nome: row.nome,
+        endereco: row.endereco,
         especialidade: row.especialidade || "",
-        marcas:        row.marcas || "",
-        telefone:      row.telefone,
-        email:         row.email,
-        avaliacao:     row.avaliacao,
-        foto_path:     row.foto_path,
-        id_mecanico:   row.id_mecanico,
+        marcas: row.marcas || "",
+        telefone: row.telefone,
+        email: row.email,
+        avaliacao: row.avaliacao,
+        foto_path: row.foto_path,
+        id_mecanico: row.id_mecanico,
         location: {
           lat: row.latitude_oficina,
           lon: row.longitude_oficina,
@@ -50,7 +53,9 @@ con.connect((err) => {
       console.error("⚠️  Erros ao indexar:", JSON.stringify(erros, null, 2));
     }
 
-    console.log(`✅ ${rows.length} oficina(s) sincronizada(s) com o Elasticsearch!`);
+    console.log(
+      `✅ ${rows.length} oficina(s) sincronizada(s) com o Elasticsearch!`,
+    );
 
     con.end();
     await esClient.close();

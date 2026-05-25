@@ -1,3 +1,6 @@
+//arquivo para criar o indices no Elasticsearch
+// executado apenas ao iniciar o projeto pela primeira vez
+
 import { Client } from "@elastic/elasticsearch";
 
 const client = new Client({ node: "http://localhost:9200" });
@@ -10,17 +13,17 @@ await client.indices.create({
   body: {
     mappings: {
       properties: {
-        id_oficina:         { type: "integer" },
-        nome:               { type: "text", analyzer: "portuguese" },
-        endereco:           { type: "text", analyzer: "portuguese" },
-        especialidade:      { type: "text", analyzer: "portuguese" },
-        marcas:             { type: "text", analyzer: "portuguese" },
-        telefone:           { type: "keyword" },
-        email:              { type: "keyword" },
-        avaliacao:          { type: "float" },
-        foto_path:          { type: "keyword", index: false },
-        id_mecanico:        { type: "integer" },
-        location:           { type: "geo_point" },
+        id_oficina: { type: "integer" },
+        nome: { type: "text", analyzer: "portuguese" },
+        endereco: { type: "text", analyzer: "portuguese" },
+        especialidade: { type: "text", analyzer: "portuguese" },
+        marcas: { type: "text", analyzer: "portuguese" },
+        telefone: { type: "keyword" },
+        email: { type: "keyword" },
+        avaliacao: { type: "float" },
+        foto_path: { type: "keyword", index: false },
+        id_mecanico: { type: "integer" },
+        location: { type: "geo_point" },
       },
     },
   },

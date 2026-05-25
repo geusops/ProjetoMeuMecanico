@@ -1,5 +1,4 @@
-//modificado por Khenny
-
+//sessao de imports
 import express from "express";
 import mysql from "mysql";
 import cors from "cors";
@@ -25,12 +24,7 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 //https://expressjs.com/en/resources/middleware/cors.html
 app.use(cors());
 
-//
-// Banco de dados
-//
-//
 //referencia https://www.w3schools.com/nodejs/nodejs_mysql.asp
-
 //configuração para conexao no banco de dados
 let con = mysql.createConnection({
   host: "localhost",
@@ -38,19 +32,6 @@ let con = mysql.createConnection({
   password: "pass123",
   database: "meu_mecanico",
 });
-
-// //testando conexcao
-// con.connect(function (err) {
-//   if (err) {
-//     console.error("❌ ERRO AO CONECTAR NO BANCO:", err.message);
-//     console.log("💡 Dicas:");
-//     console.log("   - MySQL está rodando no XAMPP?");
-//     console.log("   - Banco 'meu_mecanico' foi criado no phpMyAdmin?");
-//     return;
-//   }
-
-//   console.log("✅ Conectado ao banco de dados 'meu_mecanico' com sucesso!");
-// });
 
 //testando a conexao
 //https://www.w3schools.com/nodejs/nodejs_mysql.asp
@@ -64,44 +45,6 @@ con.connect(function (err) {
     output_consulta = result;
   });
 });
-
-//testando novo modelo de busca - Geu
-
-// //testando novo modelo de busca - Geu (versão original MySQL, substituída pela versão com Elasticsearch abaixo)
-// app.get("/oficinas", (req, res) => {
-//   // Pegamos os valores da URL. Ex: /oficinas?lat=-23.54&lon=-46.45&raio=20
-//   const { lat, lon, raio } = req.query;
-//
-//   // conversando dos valores para float
-//   const userLat = parseFloat(lat);
-//   const userLon = parseFloat(lon);
-//   const searchRaio = parseFloat(raio) || 10; // definindo 10km como padrão
-//
-//   // Query para calcular a distancia das oficinas e filtrando pelo raio usando a função ST_Distance_Sphere no MySQL.
-//   //https://dev.mysql.com/doc/refman/8.4/en/spatial-convenience-functions.html
-//
-//   // Aqui, a função ST_Distance_Sphere calcular a distancia entre dois pontos (point 1 e point 2). Nesse caso, um dos pontos é a localização da oficina (longitude_oficina e latitude_oficina) e o outro é a localização que vamos mandar, podendo ser a localizacao do usuário ou um placeholder fixo. HAVING distancia_km <= ? é usando para filtrar e trazer oficinas que estejam dentro de um raio definido. O resultado é ordenado pela distancia.
-//   const sql = `
-//     SELECT
-//         * ,
-//         (ST_Distance_Sphere(
-//             point(longitude_oficina, latitude_oficina),
-//             point(?, ?)
-//         ) / 1000) AS distancia_km
-//     FROM oficinas
-//     HAVING distancia_km <= ?
-//     ORDER BY distancia_km ASC
-//   `;
-//
-//   // Importante ressaltar que nessa funcao, a longitude vem antes da latitude. Isso é um padrao do MySQL.
-//   con.query(sql, [userLon, userLat, searchRaio], (err, result) => {
-//     if (err) {
-//       console.error("Erro na busca:", err);
-//       return res.status(500).json({ error: "Erro interno no servidor" });
-//     }
-//     res.json({ output_consulta: result });
-//   });
-// });
 
 // Versão com Elasticsearch - quando q está presente usa ES; sem q mantém MySQL geo-distância
 app.get("/oficinas", async (req, res) => {
@@ -167,7 +110,7 @@ app.get("/oficinas", async (req, res) => {
   }
 
   // Sem termo de busca: mantém a busca geográfica via MySQL
-  // Importante ressaltar que nessa funcao, a longitude vem antes da latitude. Isso é um padrao do MySQL.
+  //nessa funcao, a longitude vem antes da latitude o que é padrao do MySQL.
   const sql = `
     SELECT
         * ,
@@ -180,6 +123,7 @@ app.get("/oficinas", async (req, res) => {
     ORDER BY distancia_km ASC
   `;
 
+  //valida se teve erro de busca
   con.query(sql, [userLon, userLat, searchRaio], (err, result) => {
     if (err) {
       console.error("Erro na busca:", err);
@@ -189,7 +133,7 @@ app.get("/oficinas", async (req, res) => {
   });
 });
 
-// Rota raiz para teste no navegador - Khenny
+// Rota raiz para teste no navegador
 app.get("/", (req, res) => {
   res.json({
     status: "OK",
@@ -197,44 +141,6 @@ app.get("/", (req, res) => {
     banco: "Conectado com sucesso",
   });
 });
-
-// //inicio do serviço - Khenny
-// app.get("/oficinas", (req, res) => {
-//   res.send({ output_consulta });
-//   res.json({ message: "Rota /oficinas funcionando" });
-// });
-
-// old - geu
-// //https://salma-mohamed.medium.com/post-and-get-requests-on-both-reactjs-and-nodejs-part-1-basics-ddf9d6f219ff
-// app.post("/usuarios", (req, res) => {
-//   //mapeando os dados do formulario em variaveis
-//   const nome = req.body.nome;
-//   const telefone = req.body.telefone;
-//   const email = req.body.email;
-//   const senha = req.body.senha;
-//   const tipo = req.body.tipo;
-
-//   console.log(req.body);
-//   //envio para o banco de dados
-//   //as interrogacoes sao placeholders como aprendido no semestre passado
-//   //ref: https://stackoverflow.com/questions/44266248/escape-question-mark-characters-as-placeholders-for-mysql-query-in-nodejs
-//   const estruturaSQL = `INSERT INTO usuarios (nome, telefone, email, senha, tipo) VALUES (?, ?, ?, ?, ?)`;
-
-//   con.query(
-//     estruturaSQL,
-//     //inserindo os valores do placeholder
-//     [nome, telefone, email, senha, tipo],
-//     function (err, result) {
-//       if (err) {
-//         console.log(err);
-//         //deu errado :(
-//         return res.status(500).send("Erro ao inserir");
-//       }
-//       //deu tudo certo :)
-//       res.send("Usuario criado com sucesso");
-//     },
-//   );
-// });
 
 // Rota de Cadastro - Khenny
 app.post("/usuarios", async (req, res) => {
@@ -346,7 +252,7 @@ app.post("/oficinas", (req, res) => {
     servicos,
     latitude_oficina,
     longitude_oficina,
-    id_usuario, // alterado: agora recebemos o ID do usuário logado
+    id_usuario,
   } = req.body;
 
   if (!nome || !endereco) {
@@ -523,7 +429,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   });
 });
 
-// ADD Khenny
+// ADD avaliacoes - Khenny
 app.post("/avaliacoes", (req, res) => {
   console.log("📩 Avaliação recebida:", req.body);
   const { id_cliente, id_oficina, nota, comentario, data } = req.body;
@@ -566,7 +472,7 @@ app.get("/oficinas/:id/servicos", (req, res) => {
 
   con.query(sql, [id], (err, result) => {
     if (err) {
-      console.error("❌ Erro ao buscar serviços:", err);
+      console.error("Erro ao buscar serviços:", err);
 
       return res.status(500).json({
         error: "Erro ao buscar serviços",
@@ -680,6 +586,6 @@ app.delete("/admin/oficinas/:id", (req, res) => {
 
 //porta de servico - Khenny
 app.listen(3000, () => {
-  console.log("🚀 Backend rodando com sucesso na porta 3000");
-  console.log("📍 Teste cadastro em: POST http://localhost:3000/usuarios");
+  console.log("Backend rodando com sucesso na porta 3000");
+  console.log("Teste cadastro em: POST http://localhost:3000/usuarios");
 });
