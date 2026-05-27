@@ -239,7 +239,7 @@ function HomePage(props) {
          o React destrói o mapa velho e cria um novo centralizado no lugar certo */
               center={position}
               zoom={14}
-              scrollWheelZoom={false}
+              scrollWheelZoom={true}
               style={{ height: "100%", width: "100%" }}
             >
               <TileLayer

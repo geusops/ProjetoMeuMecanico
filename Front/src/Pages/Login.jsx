@@ -5,7 +5,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 export default function Login() {
-  
   // Guarda o que o usuário digita (email e senha)
   const [form, setForm] = useState({ email: "", senha: "" });
 
@@ -51,15 +50,14 @@ export default function Login() {
     } else {
       setErro(resultado.error || "Email ou senha incorretos.");
     }
-    
+
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-10">
-        
-        <h1 className="text-3xl font-bold text-sky-700 mb-8 text-center">
+        <h1 className="text-3xl font-bold text-sky-500 mb-8 text-center">
           Entrar na conta
         </h1>
 
@@ -71,9 +69,10 @@ export default function Login() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Email</label>
+            <label className="block text-gray-700 font-medium mb-2">
+              Email
+            </label>
             <input
               type="email"
               name="email"
@@ -86,7 +85,9 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Senha</label>
+            <label className="block text-gray-700 font-medium mb-2">
+              Senha
+            </label>
             <input
               type="password"
               name="senha"
@@ -101,7 +102,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-sky-600 text-white py-3 rounded-lg font-semibold hover:bg-sky-700 transition shadow-md disabled:opacity-70"
+            className="w-full bg-sky-500 text-white py-3 rounded-lg font-semibold hover:bg-sky-700 transition shadow-md disabled:opacity-70"
           >
             {loading ? "Entrando..." : "Entrar"}
           </button>
@@ -109,7 +110,10 @@ export default function Login() {
 
         <p className="text-center text-gray-600 mt-6">
           Ainda não tem conta?{" "}
-          <Link to="/cadastro" className="text-sky-600 hover:underline font-medium">
+          <Link
+            to="/cadastro"
+            className="text-sky-600 hover:underline font-medium"
+          >
             Cadastrar agora
           </Link>
         </p>

@@ -12,13 +12,13 @@ import { NavLink, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function CadastrarOficina({ mapaEspecialidades }) {
-  //
-  // INÍCIO - bloco dos sets e states
-  //
   // checa qual botao esta ativo
   const [ativo, setAtivo] = useState("minha_oficina"); // Estado do endereço (CEP, rua, etc)
-  //const [servicos, setServicos] = useState([]); // ref aos checkboxes de serviços
-  const [marcas, setMarcas] = useState([]); // ref aos checkboxes de marcas
+
+  // ref aos checkboxes de marcas
+  const [marcas, setMarcas] = useState([]);
+
+  // ref o formulario de endereco para envio ao backend
   const [endereco, setEndereco] = useState({
     cep: "",
     rua: "",
@@ -27,23 +27,19 @@ function CadastrarOficina({ mapaEspecialidades }) {
     bairro: "",
     cidade: "",
     estado: "",
-  }); // ref o formulario de endereco para envio ao backend
+  });
 
-  //
-  // testando
-  //
-  // Nova estrutura de estado para armazenar se o serviço está selecionado e o seu respectivo preço médio
   // Exemplo interno: { e1: { ativo: true, preco: "350.00" }, e6: { ativo: false, preco: "" } }
   const [servicosForm, setServicosForm] = useState({});
 
   // estado para os campos da oficina - adicionado para envio ao backend
-  const [form, setForm] = useState({ nome: "", email: "", telefone: "" });
+  const [form, setForm] = useState({
+    nome: "",
+    email: "",
+    telefone: "",
+    descricao: "",
+  });
   const [mensagem, setMensagem] = useState("");
-
-  //
-  // FIM - bloco dos sets e states
-  //
-
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
 
@@ -52,18 +48,7 @@ function CadastrarOficina({ mapaEspecialidades }) {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // https://www.w3schools.com/react/react_forms_checkbox.asp
-  // https://dev.to/collegewap/how-to-work-with-checkboxes-in-react-44bc
-  // handler para os checkboxes de serviços.
-  // const handleServico = (e) => {
-  //   const { value, checked } = e.target;
-  //   if (checked) {
-  //     setServicos([...servicos, value]); // aqui a gente adiciona o serviço selecionado no array de serviço
-  //   } else {
-  //     setServicos(servicos.filter((item) => item !== value));
-  //   }
-  // };
-  // Novo handler que gerencia a ativação/desativação do serviço e preserva o preço digitado
+  //  handler que gerencia a ativação/desativação do serviço e preserva o preço digitado
   const handleServicoCheckbox = (chave) => {
     const atual = servicosForm[chave] || { ativo: false, preco: "" };
     setServicosForm({
@@ -72,7 +57,7 @@ function CadastrarOficina({ mapaEspecialidades }) {
     });
   };
 
-  // Novo handler focado em capturar as mudanças de digitação no input de preço médio
+  //  handler focado em capturar as mudanças de digitação no input de preço médio
   const handleServicoPreco = (chave, valor) => {
     const statusAtual = servicosForm[chave] || { ativo: true, preco: "" };
     setServicosForm({
@@ -91,7 +76,7 @@ function CadastrarOficina({ mapaEspecialidades }) {
     }
   };
 
-  console.log("Usuário logado:", user);
+  //funcao para enviar dados para o backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensagem("");
@@ -105,17 +90,26 @@ function CadastrarOficina({ mapaEspecialidades }) {
         precoMedio: parseFloat(dados.preco),
       }));
 
+    // mapeia as especialidades selecionadas
+    const resumoChaves = Object.entries(servicosForm)
+      .filter(([_, dados]) => dados.ativo && dados.preco)
+      .map(([chave, _]) => chave) // Pega apenas o ID (e1, e2...)
+      .join(",");
+
     if (listaServicosPrecos.length === 0) {
       setMensagem("⚠️ Selecione ao menos um serviço e informe o preço médio.");
       return;
     }
 
+    //setando endenreco completo
     const enderecoCompleto = `${endereco.rua}, ${endereco.numero || "s/n"} - ${endereco.bairro}, ${endereco.cidade} - ${endereco.estado}, Brasil`;
 
+    //geolicalizacao
     try {
       let lat = null;
       let lon = null;
       try {
+        //usando o nomination para definir as coordenadas a partir do cep
         const geo = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${endereco.cep},Brasil&countrycodes=br&email=geuso002@gmail.com`,
         );
@@ -128,16 +122,17 @@ function CadastrarOficina({ mapaEspecialidades }) {
         console.log("Não foi possível obter coordenadas", e.Message);
       }
 
+      //submetendo os dados para o backend
       await axios.post("http://localhost:3000/oficinas", {
         nome: form.nome,
         email: form.email,
         telefone: form.telefone,
+        descricao: form.descricao,
         endereco: enderecoCompleto,
-
         uf: endereco.estado,
         cidade: endereco.cidade,
         bairro: endereco.bairro,
-
+        especialidade: resumoChaves,
         marcas: marcas.join(","),
         servicos: listaServicosPrecos,
 
@@ -146,16 +141,17 @@ function CadastrarOficina({ mapaEspecialidades }) {
 
         id_usuario: user?.id,
       });
-      setMensagem("✅ Oficina cadastrada com sucesso!");
+      setMensagem("Oficina cadastrada com sucesso!");
       setTimeout(() => navigate("/home"), 2000);
     } catch (error) {
-      setMensagem("❌ Erro ao cadastrar. Tente novamente.");
+      setMensagem("Erro ao cadastrar. Tente novamente.");
       console.error(error);
     }
   };
 
   //referencia:
   //https://www.youtube.com/watch?v=155ywtYSpdY
+  // funcao especifica para setar campos para serem usado no filtro da tela de oficinas
   const consultaCEP = (e) => {
     const cep = e.target.value.replace(/\D/g, "");
 
@@ -200,56 +196,15 @@ function CadastrarOficina({ mapaEspecialidades }) {
 
   return (
     <div className="flex">
-      {/* abas */}
-      <div className="p-6 pt-10 w-1/6 border">
-        <button
-          className="rounded-md text-sky-400 font-bold p-2 w-full bg-sky-100 flex justify-start"
-          onClick={() => setAtivo("minha_oficina")}
-        >
-          <NavLink
-            to="/minha-oficina"
-            className={({ isActive }) =>
-              isActive ? "bg-sky-100 text-sky-400" : "text-slate-400"
-            }
-          >
-            Minha Oficina
-          </NavLink>
-        </button>
-        <button
-          className="rounded-md text-slate-400 font-bold p-2 w-full flex justify-start"
-          onClick={() => setAtivo("avaliacoes")}
-        >
-          <NavLink
-            to="/minha-oficina"
-            className={({ isActive }) =>
-              isActive ? "bg-sky-100 text-sky-400" : "text-slate-400"
-            }
-          >
-            Avaliações
-          </NavLink>
-        </button>
-        <button
-          className="rounded-md text-slate-400 font-bold p-2 w-full flex justify-start"
-          onClick={() => setAtivo("agendamentos")}
-        >
-          Agendamentos
-        </button>
-        <button
-          className="rounded-md text-slate-400 font-bold p-2 w-full flex justify-start"
-          onClick={() => setAtivo("financeiro")}
-        >
-          Financeiro
-        </button>
-      </div>
       {/* tela cadastro */}
       <div className="w-full p-24 ml-16 mr-16">
-        <div className="">
+        <div className="pr-32 pl-32">
           {/* titulo */}
-          <div className="p-4">
-            <h2 className="text-3xl text-black font-bold text-left">
+          <div className="p-4 text-center">
+            <h2 className="text-3xl text-black font-bold">
               Cadastrar nova oficina
             </h2>
-            <p className="text-gray-600 text-md text-left">
+            <p className="text-gray-600 text-md">
               Preencha os dados abaixo para que os cliente encontrem seu
               estabelecimento
             </p>
@@ -366,6 +321,8 @@ function CadastrarOficina({ mapaEspecialidades }) {
                     <textarea
                       name="descricao"
                       id="descricao"
+                      value={form.descricao}
+                      onChange={handleFormChange}
                       placeholder="Conte um pouco sobre a história, equipe e diferenciais da sua oficina..."
                       className="w-full px-4 py-3 bg-slate-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                     />
@@ -411,7 +368,7 @@ function CadastrarOficina({ mapaEspecialidades }) {
                         return (
                           <div
                             key={chave}
-                            className="flex items-center justify-between border p-3 rounded-md bg-white shadow-sm"
+                            className="flex items-center justify-between border p-3 rounded-md shadow-sm"
                           >
                             <div className="flex items-center gap-2">
                               <input
@@ -420,7 +377,7 @@ function CadastrarOficina({ mapaEspecialidades }) {
                                 value={chave}
                                 checked={isChecked}
                                 onChange={() => handleServicoCheckbox(chave)}
-                                className="w-4 h-4 text-sky-500 focus:ring-sky-400"
+                                className="text-sky-500 focus:ring-sky-400"
                               />
                               <label
                                 htmlFor={`servico-${chave}`}

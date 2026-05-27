@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { Client as ESClient } from "@elastic/elasticsearch";
+import { syncSingleOficina } from "./es-sync.js";
 
 dotenv.config();
 
@@ -242,8 +243,11 @@ app.post("/login", (req, res) => {
 app.post("/oficinas", (req, res) => {
   console.log("📩 Dados recebidos no cadastro de oficina:", req.body);
 
+  const foto_default = "/uploads/oficinas/default-oficina.png";
+
   const {
     nome,
+    foto_path = foto_default, // Usando a imagem padrão
     telefone,
     email,
     endereco,
@@ -274,108 +278,122 @@ app.post("/oficinas", (req, res) => {
   `;
 
   // função responsável por criar a oficina após obter o id_mecanico real
+  // função responsável por criar a oficina após obter o id_mecanico real
   const criarOficina = (idMecanicoReal) => {
-    // Convert o usuario convencional para mecanico
+    // Atualiza o tipo do usuário para mecânico
     con.query(
       `UPDATE usuarios SET tipo = 'mecanico' WHERE id_usuario = ?`,
       [id_usuario],
       (errUpdate) => {
-        if (errUpdate) {
-          console.error(
-            "Não foi possível atualizar o tipo do usuário para mecânico:",
-            errUpdate.message,
-          );
-        }
+        if (errUpdate)
+          console.error("Erro ao atualizar tipo:", errUpdate.message);
       },
     );
 
+    // monta a query
     const sql = `
       INSERT INTO oficinas (
-  nome,
-  foto_path,
-  endereco,
-  telefone,
-  email,
-  id_mecanico,
-  especialidade,
-  marcas,
-  descricao,
-  latitude_oficina,
-  longitude_oficina,
-  uf,
-  cidade,
-  bairro
-)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        nome, foto_path, endereco, telefone, email, id_mecanico,    
+        especialidade, marcas, descricao, latitude_oficina, longitude_oficina, 
+        uf, cidade, bairro          
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
+    // Callback alterado para 'async' para permitir o uso de 'await syncSingleOficina'
     con.query(
       sql,
       [
         nome,
+        foto_path,
+        endereco,
         telefone,
         email,
-        endereco,
-        especialidade,
+        idMecanicoReal,
+        especialidade || "",
         marcas,
+        req.body.descricao || "",
         latitude_oficina,
         longitude_oficina,
-        idMecanicoReal,
+        req.body.uf,
+        req.body.cidade,
+        req.body.bairro,
       ],
-      (err, result) => {
+      async (err, result) => {
         if (err) {
           console.error("❌ Erro ao cadastrar oficina:", err);
-
-          return res.status(500).json({
-            error: "Erro interno ao cadastrar oficina",
-          });
+          return res
+            .status(500)
+            .json({ error: "Erro interno ao cadastrar oficina" });
         }
 
         const idOficina = result.insertId;
-
         console.log("✅ Oficina cadastrada com ID:", idOficina);
 
-        // Inserção dos serviços vinculados à oficina
+        // Objeto formatado para o Elasticsearch
+        const dadosParaElastic = {
+          id_oficina: idOficina,
+          nome,
+          endereco,
+          especialidade,
+          marcas,
+          telefone,
+          email,
+          avaliacao: 0,
+          foto_path,
+          id_mecanico: idMecanicoReal,
+          latitude_oficina,
+          longitude_oficina,
+        };
+
+        // Verificação de serviços
         if (Array.isArray(servicos) && servicos.length > 0) {
           const sqlServicos = `
-            INSERT INTO servicos 
-            (
-              nome_servico,
-              descricao,
-              preco_medio,
-              id_oficina
-            )
+            INSERT INTO servicos (nome_servico, descricao, preco_medio, id_oficina)
             VALUES ?
           `;
 
-          const valoresServicos = servicos.map((servico) => [
-            servico.nomeServico,
-            servico.descricao,
-            parseFloat(servico.precoMedio) || 0,
+          const valoresServicos = servicos.map((s) => [
+            s.nomeServico,
+            s.descricao,
+            parseFloat(s.precoMedio) || 0,
             idOficina,
           ]);
 
-          con.query(sqlServicos, [valoresServicos], (errServicos) => {
+          con.query(sqlServicos, [valoresServicos], async (errServicos) => {
             if (errServicos) {
               console.error("❌ Erro ao cadastrar serviços:", errServicos);
-
-              return res.status(500).json({
-                error: "Oficina cadastrada, mas houve erro ao salvar serviços.",
-              });
+              return res
+                .status(500)
+                .json({ error: "Erro ao salvar serviços." });
             }
 
-            console.log("✅ Serviços cadastrados com sucesso!");
+            // Sincronização com Elasticsearch
+            try {
+              await syncSingleOficina(dadosParaElastic);
+            } catch (esError) {
+              console.error(
+                "⚠️ Falha ao indexar no ES, mas dados salvos no MySQL.",
+              );
+            }
 
-            return res.status(201).json({
-              message: "Oficina e serviços cadastrados com sucesso!",
-              id: idOficina,
-            });
+            res
+              .status(201)
+              .json({ message: "Oficina e serviços salvos!", id: idOficina });
           });
         } else {
-          return res.status(201).json({
-            message: "Oficina cadastrada sem serviços.",
-            id: idOficina,
-          });
+          // Sincronização com Elasticsearch (caso sem serviços)
+          try {
+            await syncSingleOficina(dadosParaElastic);
+          } catch (esError) {
+            console.error(
+              "⚠️ Falha ao indexar no ES, mas dados salvos no MySQL.",
+            );
+          }
+
+          res
+            .status(201)
+            .json({ message: "Oficina salva sem serviços.", id: idOficina });
         }
       },
     );
@@ -395,10 +413,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     if (resultBusca.length > 0) {
       const idMecanicoExistente = resultBusca[0].id_mecanico;
 
-      console.log(
-        "ℹ️ Usuário já possui perfil de mecânico:",
-        idMecanicoExistente,
-      );
+      console.log("Usuário já possui perfil de mecânico:", idMecanicoExistente);
 
       criarOficina(idMecanicoExistente);
     } else {
@@ -587,5 +602,4 @@ app.delete("/admin/oficinas/:id", (req, res) => {
 //porta de servico - Khenny
 app.listen(3000, () => {
   console.log("Backend rodando com sucesso na porta 3000");
-  console.log("Teste cadastro em: POST http://localhost:3000/usuarios");
 });

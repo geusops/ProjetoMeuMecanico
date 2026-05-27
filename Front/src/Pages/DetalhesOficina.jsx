@@ -50,14 +50,12 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
   const { id } = useParams();
 
   const oficinaSelecionada = dados.find((of) => of.id_oficina === parseInt(id));
-  // ADD Khenny
 
   const { user } = useContext(AuthContext);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [nota, setNota] = useState(5);
   const [comentario, setComentario] = useState("");
   const [mensagemAvaliacao, setMensagemAvaliacao] = useState("");
-  // Adicione essa linha junto com os outros states (perto do mostrarForm, nota, etc.)
   const [servicoSelecionado, setServicoSelecionado] = useState(""); // state pra guardar o servico que o usuario selecionou e usar para o formulario de orçamento
   const [open, setOpen] = useState(false); // state pra controlar a abertura do formulario de orcamento
 
@@ -66,6 +64,7 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
 
   const [servicos, setServicos] = useState([]);
 
+  //buscando os servicos da oficina
   useEffect(() => {
     if (oficinaSelecionada) {
       axios
@@ -172,6 +171,7 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
       return;
     }
 
+    //submetendo o formulario do orcamento para o backend
     try {
       const response = await axios.post("http://localhost:3000/orcamentos", {
         nome: form.nome,

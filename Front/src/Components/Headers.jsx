@@ -57,7 +57,6 @@ export default function Headers() {
               <li className="hover:text-sky-500 transition">
                 <Link to="/oficinas">Oficinas</Link>
               </li>
-              <li className="hover:text-sky-500 transition">Serviços</li>
               <li className="hover:text-sky-500 transition">Contato</li>
             </ul>
           </div>
@@ -70,7 +69,7 @@ export default function Headers() {
                 {/* Botão que leva ao perfil */}
                 <Link
                   to="/perfil"
-                  className="px-5 py-2.5 bg-sky-600 text-white rounded-lg font-medium hover:bg-sky-700 transition shadow-sm flex items-center gap-2"
+                  className="px-5 py-2.5 bg-sky-500 text-white rounded-lg font-medium hover:bg-sky-700 transition shadow-sm flex items-center gap-2"
                 >
                   Olá, {primeiroNome}!<span className="text-lg">★</span>
                 </Link>
@@ -95,7 +94,7 @@ export default function Headers() {
 
                 <Link
                   to="/cadastro"
-                  className="px-5 py-2.5 bg-sky-600 text-white rounded-lg font-medium hover:bg-sky-700 transition shadow-sm"
+                  className="px-5 py-2.5 bg-sky-500 text-white rounded-lg font-medium hover:bg-sky-700 transition shadow-sm"
                 >
                   Cadastrar
                 </Link>

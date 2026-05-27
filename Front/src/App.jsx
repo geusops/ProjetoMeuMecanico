@@ -85,7 +85,6 @@ function App() {
   // Dentro do App.jsx, crie esta função específica para o arraste
   const handleArrasteMapa = useCallback(
     async (lat, lon) => {
-      // 1. Opcional: Se o seu hook Location permitir, você pode atualizar o centro global aqui
       // Isso ajuda a manter a sincronia entre os componentes
       // setCoords({ lat, lon });
 
