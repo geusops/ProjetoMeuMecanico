@@ -2,7 +2,7 @@ import {
   ArrowLeft,
   Car,
   CircleCheck,
-  Clock,
+  Mail,
   MapPin,
   MessageSquareX,
   PhoneIcon,
@@ -15,19 +15,31 @@ import { Link, useParams } from "react-router-dom";
 import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import axios from "axios";
+//formulario
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import TextField from "@mui/material/TextField";
 
 //funcao pra renderizar os cards de serviços da oficina
-export function ServiceCard({ titulo, descricao }) {
-  // aqui eu faco o render dos cards
+export function ServiceCard({ titulo, descricao, preco }) {
   return (
     <div className="flex items-start gap-4 p-4 shadow-sm border border-gray-100 rounded-xl bg-white hover:shadow-md transition">
       <div className="bg-sky-100 p-3 rounded-lg">
         <CircleCheck size={28} className="text-sky-600" />
       </div>
-      <div>
+
+      <div className="w-full">
         <h3 className="text-gray-900 font-bold text-lg">{titulo}</h3>
-        <p className="text-gray-500 text-sm">
+
+        <p className="text-gray-500 text-sm mt-1">
           {descricao || "Serviço especializado com garantia."}
+        </p>
+
+        <p className="text-sky-600 font-bold text-sm mt-2">
+          R$ {Number(preco).toFixed(2).replace(".", ",")}
         </p>
       </div>
     </div>
@@ -38,16 +50,31 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
   const { id } = useParams();
 
   const oficinaSelecionada = dados.find((of) => of.id_oficina === parseInt(id));
-  // ADD Khenny
 
   const { user } = useContext(AuthContext);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [nota, setNota] = useState(5);
   const [comentario, setComentario] = useState("");
   const [mensagemAvaliacao, setMensagemAvaliacao] = useState("");
+  const [servicoSelecionado, setServicoSelecionado] = useState(""); // state pra guardar o servico que o usuario selecionou e usar para o formulario de orçamento
+  const [open, setOpen] = useState(false); // state pra controlar a abertura do formulario de orcamento
 
   // busca as avaliacoes da oficina - Khenny
   const [avaliacoes, setAvaliacoes] = useState([]);
+
+  const [servicos, setServicos] = useState([]);
+
+  //buscando os servicos da oficina
+  useEffect(() => {
+    if (oficinaSelecionada) {
+      axios
+        .get(
+          `http://localhost:3000/oficinas/${oficinaSelecionada.id_oficina}/servicos`,
+        )
+        .then((res) => setServicos(res.data.servicos))
+        .catch((err) => console.error(err));
+    }
+  }, [oficinaSelecionada]);
 
   useEffect(() => {
     if (oficinaSelecionada) {
@@ -82,10 +109,101 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
     }
   };
 
+  //definindo o formulario de orcamento
+  const [form, setForm] = useState({
+    nome: "",
+    telefone: "",
+    email: "",
+    servicoDesejado: "",
+    descricao: "",
+  });
+
+  // Guarda mensagens de erro
+  const [erro, setErro] = useState("");
+
   console.log({ oficinaSelecionada });
   if (!oficinaSelecionada) {
     return <h2>Oficina não encontrada</h2>;
   }
+
+  // Função para solicitar orçamento
+  const handleSolicitarOrcamento = () => {
+    if (!servicoSelecionado) {
+      alert("Por favor, selecione um serviço antes de solicitar o orçamento!");
+      return;
+    }
+
+    // 💡 SOLUÇÃO: Atualiza o formulário com o serviço que o usuário acabou de escolher
+    setForm((prev) => ({
+      ...prev,
+      servicoDesejado: servicoSelecionado,
+    }));
+
+    handleAbreFormuario();
+  };
+
+  //funcao para abrir o formulario
+  const handleAbreFormuario = () => {
+    setOpen(true);
+  };
+
+  //funcao para fechar o formulario
+  const handleFechaFormuario = () => {
+    setOpen(false);
+    setErro(""); // Limpa erros ao fechar
+  };
+
+  // Função essencial para capturar o que o usuário digita nos inputs
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErro("");
+
+    if (!form.nome || !form.telefone || !form.email || !form.servicoDesejado) {
+      setErro("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    //submetendo o formulario do orcamento para o backend
+    try {
+      const response = await axios.post("http://localhost:3000/orcamentos", {
+        nome: form.nome,
+        telefone: form.telefone,
+        email: form.email,
+        servicoDesejado: form.servicoDesejado,
+        descricao: form.descricao,
+        id_oficina: parseInt(id),
+      });
+
+      if (response.status === 201) {
+        // Limpa o formulário e o select principal
+        setForm({
+          nome: "",
+          telefone: "",
+          email: "",
+          servicoDesejado: "",
+          descricao: "",
+        });
+        setServicoSelecionado("");
+
+        // Fecha o modal após o sucesso
+        handleFechaFormuario();
+        alert("Orçamento enviado com sucesso!");
+      }
+    } catch (error) {
+      console.error("Erro ao enviar orçamento:", error);
+      setErro(
+        error.response?.data?.erro || "Erro ao processar sua solicitação.",
+      );
+    }
+  };
 
   return (
     // div de fundo
@@ -217,17 +335,25 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
               </div>
               {/* mapeando os servicos */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                {oficinaSelecionada.especialidade
-                  ?.split(",")
-                  .map((chave) => chave.trim())
-                  .filter((chave) => mapaEspecialidades[chave]) // Só renderiza se a chave existir no mapa
-                  .map((chave) => (
+                {servicos.length > 0 ? (
+                  servicos.map((servico) => (
                     <ServiceCard
-                      key={chave}
-                      titulo={mapaEspecialidades[chave]}
-                      descricao={`Especialistas em ${mapaEspecialidades[chave].toLowerCase()}.`}
+                      key={servico.id_servico}
+                      titulo={servico.nome_servico}
+                      descricao={servico.descricao}
+                      preco={servico.preco_medio}
                     />
-                  ))}
+                  ))
+                ) : (
+                  <p className="text-gray-500 italic">
+                    Nenhum serviço cadastrado para esta oficina.
+                  </p>
+                )}
+              </div>
+
+              <div className="pt-4 text-gray-400 italic">
+                Se interessou por um serviço? Solicite um orçamento no menu ao
+                lado!
               </div>
             </section>
             {/* marcas atendidas */}
@@ -266,27 +392,189 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
           </div>
           {/* painel direita */}
           <div className="bg-slate-100 rounded-md p-6 mt-2">
-            <h1 className="font-bold text-2xl text-black text-center">
-              Onde Estamos
-            </h1>
-            {/* endereco */}
-            <div className="flex gap-2 p-2 text-gray-700sm">
-              <MapPin className="text-sky-500" />
-              <p>{oficinaSelecionada.endereco}</p>
+            {/* informacoes de contato */}
+            <div className="margin-bottom-4 border-b border-gray-300 pb-4">
+              <h1 className="font-bold text-2xl text-black text-center pb-4">
+                Informações de Contato
+              </h1>
+              {/* endereco */}
+              <div className="flex gap-2 p-2 text-gray-700sm items-center">
+                <MapPin className="text-sky-500" />
+                <p>{oficinaSelecionada.endereco}</p>
+              </div>
+              {/* telefone */}
+              <div className="flex gap-2 p-2 text-gray-700sm items-center">
+                <PhoneIcon className="text-sky-500" />
+                <p>{oficinaSelecionada.telefone}</p>
+              </div>
+              {/* horario */}
+              <div className="flex gap-2 p-2 text-gray-700sm items-center">
+                <Mail className="text-sky-500" />
+                <p>{oficinaSelecionada.email}</p>
+              </div>
             </div>
-            {/* telefone */}
-            <div className="flex gap-2 p-2 text-gray-700">
-              <PhoneIcon className="text-sky-500" />
-              <p>{oficinaSelecionada.telefone}</p>
+            {/* formulario de orcamento */}
+            <div className="pt-4">
+              <div className="flex flex-col gap-3 border-b border-gray-300 text-center">
+                <label className="font-bold text-lgs text-black text-center">
+                  Selecione o serviço desejado:
+                </label>
+                <select
+                  value={servicoSelecionado}
+                  onChange={(e) => setServicoSelecionado(e.target.value)}
+                  className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    Escolha um serviço
+                  </option>
+                  {oficinaSelecionada.especialidade ? (
+                    oficinaSelecionada.especialidade
+                      .split(",")
+                      .map((chave) => chave.trim())
+                      .filter((chave) => mapaEspecialidades[chave]) // Garante que existe no mapa
+                      .map((chave) => (
+                        <option key={chave} value={chave}>
+                          {mapaEspecialidades[chave]}
+                        </option>
+                      ))
+                  ) : (
+                    <option disabled>Nenhum serviço disponível</option>
+                  )}
+                </select>
+              </div>
+
+              <div className="pt-4 px-4">
+                <button
+                  className="w-full flex gap-2 items-center justify-center rounded-md text-lg bg-sky-500 py-2 text-sky-50 border border-transparent shadow hover:bg-slate-700 transition font-bold"
+                  onClick={handleSolicitarOrcamento}
+                >
+                  Solicitar Orçamento
+                </button>
+              </div>
+              {/* referencia:
+              https://mui.com/material-ui/react-dialog/#form-dialogs
+              https://www.youtube.com/watch?v=mcx9WBnNc1k
+               */}
+              <Dialog open={open}>
+                <DialogTitle className="font-bold text-center">
+                  Formulário de Orçamento
+                </DialogTitle>
+                <DialogContent>
+                  <form onSubmit={handleSubmit}>
+                    <DialogContent className="space-y-4">
+                      <DialogContentText className="mb-4">
+                        Preencha os dados abaixo para solicitar o orçamento de{" "}
+                        <strong>
+                          {mapaEspecialidades[servicoSelecionado]}
+                        </strong>
+                        .
+                      </DialogContentText>
+                      {erro && (
+                        <p className="text-red-500 font-semibold text-sm bg-red-50 p-2 rounded border border-red-200">
+                          {erro}
+                        </p>
+                      )}
+
+                      {/* Campo nome */}
+                      <div>
+                        <div className="flex">
+                          <label className="block text-gray-700 font-medium mb-1">
+                            Nome completo
+                          </label>
+                          <p className="text-red-600">*</p>
+                        </div>
+                        <input
+                          type="text"
+                          name="nome"
+                          value={form.nome}
+                          onChange={handleChange}
+                          placeholder="Ex: João da Silva"
+                          className="w-full px-4 py-2 bg-slate-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          required
+                        />
+                      </div>
+
+                      {/* Campo telefone */}
+                      <div>
+                        <div className="flex">
+                          <label className="block text-gray-700 font-medium mb-1">
+                            Telefone
+                          </label>
+                          <p className="text-red-600">*</p>
+                        </div>
+                        <input
+                          type="tel"
+                          name="telefone"
+                          value={form.telefone}
+                          onChange={handleChange}
+                          placeholder="Ex: (11) 99999-9999"
+                          className="w-full px-4 py-2 bg-slate-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          required
+                        />
+                      </div>
+
+                      {/* Campo email (Apenas UM) */}
+                      <div>
+                        <div className="flex">
+                          <label className="block text-gray-700 font-medium mb-1">
+                            E-mail
+                          </label>
+                          <p className="text-red-600">*</p>
+                        </div>
+                        <div className="relative">
+                          <Mail
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                            size={18}
+                          />
+                          <input
+                            type="email"
+                            name="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            placeholder="seu@email.com"
+                            className="w-full pl-10 px-4 py-2 bg-slate-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {/* Campo Descrição/Detalhes do Problema (Opcional, mas bom ter já que está no estado) */}
+                      <div>
+                        <label className="block text-gray-700 font-medium mb-1">
+                          Detalhes do problema (Opcional)
+                        </label>
+                        <textarea
+                          name="descricao"
+                          value={form.descricao}
+                          onChange={handleChange}
+                          placeholder="Descreva brevemente o que o seu carro apresenta..."
+                          className="w-full px-4 py-2 bg-slate-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          rows={3}
+                        />
+                      </div>
+                    </DialogContent>
+
+                    {/* Botões alinhados corretamente usando o padrão do Material UI */}
+                    <DialogActions className="p-4 bg-gray-50 border-t gap-2">
+                      <button
+                        type="button"
+                        className="px-4 py-2 text-gray-500 hover:bg-gray-200 rounded-md transition font-semibold"
+                        onClick={handleFechaFormuario}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        className="bg-sky-500 text-white px-5 py-2 rounded-md font-semibold hover:bg-sky-600 transition shadow-sm"
+                      >
+                        Enviar Orçamento
+                      </button>
+                    </DialogActions>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
-            {/* horario */}
-            <div className="flex gap-2 p-2 text-gray-700sm">
-              <Clock className="text-sky-500" />
-              <p>{oficinaSelecionada.horario}</p>
-            </div>
-            <button className="flex gap-2 items-center rounded-md text-lg bg-sky-500 px-10 h-10 text-sky-50 border border-transparent shadow hover:bg-slate-700 hover:text-white transition">
-              Solicitar Orçamento
-            </button>
           </div>
         </div>
       </div>

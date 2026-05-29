@@ -9,7 +9,7 @@ import {
 import { Link } from "react-router-dom";
 
 // Khenny filtros de busca aprimorada com Claude.IA
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function Oficinas(props) {
   // filtros - adicionado por Khenny
@@ -20,6 +20,29 @@ function Oficinas(props) {
   const [avaliacaoMinima, setAvaliacaoMinima] = useState(0);
   const [servicosSelecionados, setServicosSelecionados] = useState([]);
   const [marcasSelecionadas, setMarcasSelecionadas] = useState([]);
+  const [ufSelecionada, setUfSelecionada] = useState("");
+  const [cidadeSelecionada, setCidadeSelecionada] = useState("");
+  const [bairroSelecionado, setBairroSelecionado] = useState("");
+
+  //dropdowns
+  const ufs = [...new Set(props.oficinas.map((o) => o.uf).filter(Boolean))];
+  const cidades = [
+    ...new Set(
+      props.oficinas
+        .filter((o) => o.uf === ufSelecionada)
+        .map((o) => o.cidade)
+        .filter(Boolean),
+    ),
+  ];
+
+  const bairros = [
+    ...new Set(
+      props.oficinas
+        .filter((o) => o.uf === ufSelecionada && o.cidade === cidadeSelecionada)
+        .map((o) => o.bairro)
+        .filter(Boolean),
+    ),
+  ];
 
   // funcao ler os checkbox de filtro de servicos e atualizar a lista de filtros aplicados
   const handleFiltroCheck = (id, lista, setLista) => {
@@ -30,9 +53,18 @@ function Oficinas(props) {
     }
   };
 
+  // Debounce: aguarda 300ms após o usuário parar de digitar para chamar o Elasticsearch via backend
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      props.onBuscar(busca);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [busca]);
+
   // logica do filtro
   const oficinasFiltradas = props.oficinas.filter((oficina) => {
-    const passaBusca = oficina.nome.toLowerCase().includes(busca.toLowerCase());
+    // passaBusca comentado — a busca por texto agora é feita no Elasticsearch (backend)
+    // const passaBusca = oficina.nome.toLowerCase().includes(busca.toLowerCase());
     //avaliacao
     const passaAvaliacao =
       !oficina.avaliacao || oficina.avaliacao >= avaliacaoMinima;
@@ -49,8 +81,24 @@ function Oficinas(props) {
     const passaMarca =
       marcasSelecionadas.length === 0 ||
       marcasSelecionadas.some((m) => marcasOficina.includes(m));
+    // localização
+    const passaUF = !ufSelecionada || oficina.uf === ufSelecionada;
 
-    return passaBusca && passaAvaliacao && passaServico && passaMarca;
+    const passaCidade =
+      !cidadeSelecionada || oficina.cidade === cidadeSelecionada;
+
+    const passaBairro =
+      !bairroSelecionado || oficina.bairro === bairroSelecionado;
+
+    // passaBusca removido do filtro local — agora é tratado pelo Elasticsearch no backend
+    return (
+      passaAvaliacao &&
+      passaServico &&
+      passaMarca &&
+      passaUF &&
+      passaCidade &&
+      passaBairro
+    );
   });
 
   // funcao pra limpar os filtros
@@ -60,6 +108,9 @@ function Oficinas(props) {
     setServicoFiltro("");
     setServicosSelecionados([]);
     setMarcasSelecionadas([]);
+    setUfSelecionada("");
+    setCidadeSelecionada("");
+    setBairroSelecionado("");
   };
 
   return (
@@ -78,6 +129,66 @@ function Oficinas(props) {
           <button className="text-sky-400" onClick={limparFiltros}>
             Limpar
           </button>
+        </div>
+        {/* div filtro localização */}
+        <div className="flex-col p-6 pt-2">
+          <h4 className="font-bold pb-4 text-gray-700">LOCALIZAÇÃO</h4>
+
+          <div className="border-b-2 pb-6 flex flex-col gap-3">
+            {/* UF */}
+            <select
+              value={ufSelecionada}
+              onChange={(e) => {
+                setUfSelecionada(e.target.value);
+                setCidadeSelecionada("");
+                setBairroSelecionado("");
+              }}
+              className="bg-white border border-gray-300 rounded-md p-2 text-gray-700"
+            >
+              <option value="">Todos os estados</option>
+
+              {ufs.map((uf) => (
+                <option key={uf} value={uf}>
+                  {uf}
+                </option>
+              ))}
+            </select>
+
+            {/* Cidade */}
+            <select
+              value={cidadeSelecionada}
+              onChange={(e) => {
+                setCidadeSelecionada(e.target.value);
+                setBairroSelecionado("");
+              }}
+              className="bg-white border border-gray-300 rounded-md p-2 text-gray-700"
+              disabled={!ufSelecionada}
+            >
+              <option value="">Todas as cidades</option>
+
+              {cidades.map((cidade) => (
+                <option key={cidade} value={cidade}>
+                  {cidade}
+                </option>
+              ))}
+            </select>
+
+            {/* Bairro */}
+            <select
+              value={bairroSelecionado}
+              onChange={(e) => setBairroSelecionado(e.target.value)}
+              className="bg-white border border-gray-300 rounded-md p-2 text-gray-700"
+              disabled={!cidadeSelecionada}
+            >
+              <option value="">Todos os bairros</option>
+
+              {bairros.map((bairro) => (
+                <option key={bairro} value={bairro}>
+                  {bairro}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         {/* div filtro tipos de servico */}
         <div className="flex-col p-6 pt-10">
@@ -211,10 +322,11 @@ function Oficinas(props) {
         <div className="flex">
           <div className=" w-3/6">
             <h2 className="text-3xl text-black font-bold text-left">
-              Oficinas em São Paulo
+              Oficinas disponíveis na sua região
             </h2>
             <p className="text-gray-600 text-md text-left">
-              Encontramos 6 oficinas mecânicas especializadas para você.
+              Encontramos {oficinasFiltradas.length} oficinas mecânicas
+              especializadas para você.
             </p>
           </div>
           <div className="flex gap-2 items-center pl-2 pr-2 w-3/6 justify-end">
@@ -230,88 +342,61 @@ function Oficinas(props) {
             </div>
           </div>
         </div>
-        <div className="pt-10 flex gap-2">
-          <p>Ordenar por:</p>
-          <button className="border rounded-full">Mais Relevantes</button>
-          <button>Melhor Avaliadas</button>
-          <button>Mais Próximas</button>
-          <button>Orçamento Grátis</button>
-        </div>
 
         {/* Detalhes oficinas - GRID*/}
 
         <div className="">
           <ul className="rounded-md grid grid-cols-3">
-            {/* Aqui está o segredo: 
-       oficinasFiltradas tem TODAS.
-       .slice(0, props.quantidadeLimite) pega do índice 0 até o limite escolhido.
-    */}
-            {oficinasFiltradas
-              .slice(0, props.quantidadeLimite || 9) // Se não houver limite, assume 9 por segurança
-              .map((oficina) => (
-                <li className="p-4" key={oficina.id_oficina}>
-                  <div className="shadow-md">
-                    {/* ... restante do seu código (imagem, nome, etc) ... */}
-                    <img
-                      className="w-full rounded-t-lg"
-                      src={`http://localhost:3000${oficina.foto_path}`}
-                      alt={oficina.nome}
-                    />
-                    <div className="p-4">
-                      <h2 className="text-2xl text-black font-bold text-left p-2">
-                        {oficina.nome}
-                      </h2>
+            {/* // Se não houver limite, assume 9 por segurança */}
+            {oficinasFiltradas.map((oficina) => (
+              <li className="p-4" key={oficina.id_oficina}>
+                <div className="shadow-md">
+                  {/* ... restante do seu código (imagem, nome, etc) ... */}
+                  <img
+                    className="w-full rounded-t-lg"
+                    src={`http://localhost:3000${oficina.foto_path}`}
+                    alt={oficina.nome}
+                  />
+                  <div className="p-4">
+                    <h2 className="text-2xl text-black font-bold text-left p-2">
+                      {oficina.nome}
+                    </h2>
 
-                      <div className="flex gap-1 p-2 text-gray-700">
-                        <MapPin />
-                        <p>{oficina.endereco}</p>
-                      </div>
+                    <div className="flex gap-1 p-2 text-gray-700">
+                      <MapPin />
+                      <p>{oficina.endereco}</p>
+                    </div>
 
-                      <div className="flex flex-wrap gap-1 p-1 pb-2">
-                        {/* aqui eu leio o mapeamento das especialidades. faço o split quando tme mais de um e mapeio o chave vs index */}
-                        {oficina.especialidade
-                          ?.split(",")
-                          .map((chave, index) => (
-                            <p
-                              key={index}
-                              className="bg-slate-200 text-black text-xs font-semibold rounded-full px-3 py-1 border-0 shadow-sm"
-                            >
-                              {props.mapaEspecialidades[chave.trim()] || chave}
-                            </p>
-                          ))}
-                      </div>
-                      <button className="border-2 w-full text-left text-gray-700 font-bold p-2 hover:bg-slate-700 hover:text-white">
-                        <Link
-                          className="flex justify-between"
-                          to={`/oficinas/${oficina.id_oficina}`}
+                    <div className="flex flex-wrap gap-1 p-1 pb-2">
+                      {/* aqui eu leio o mapeamento das especialidades. faço o split quando tme mais de um e mapeio o chave vs index */}
+                      {oficina.especialidade?.split(",").map((chave, index) => (
+                        <p
+                          key={index}
+                          className="bg-slate-200 text-black text-xs font-semibold rounded-full px-3 py-1 border-0 shadow-sm"
                         >
-                          {" "}
-                          Ver Detalhes
-                          <ChevronRight />
-                        </Link>
-                      </button>
+                          {props.mapaEspecialidades[chave.trim()] || chave}
+                        </p>
+                      ))}
                     </div>
-                    <div className="flex p-4 pt-0 gap-2">
-                      <Star />
-                      <p>{oficina.avaliacao}</p>
-                    </div>
+                    <button className="border-2 w-full text-left text-gray-700 font-bold p-2 hover:bg-slate-700 hover:text-white">
+                      <Link
+                        className="flex justify-between"
+                        to={`/oficinas/${oficina.id_oficina}`}
+                      >
+                        {" "}
+                        Ver Detalhes
+                        <ChevronRight />
+                      </Link>
+                    </button>
                   </div>
-                </li>
-              ))}
+                  <div className="flex p-4 pt-0 gap-2">
+                    <Star />
+                    <p>{oficina.avaliacao}</p>
+                  </div>
+                </div>
+              </li>
+            ))}
           </ul>
-        </div>
-        {/* Seletor de Quantidade */}
-        <div className="flex h-15 gap-2 rounded-lg py-2 px-2 justify-center m-12 border-b-2">
-          <label className="text-gray-600 font-medium">Mostrar:</label>
-          <select
-            onChange={(e) => props.setQuantidadeLimite(Number(e.target.value))}
-            className="bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-          >
-            <option value="9">9 oficinas</option>
-            <option value="12">12 oficinas</option>
-            <option value="24">24 oficinas</option>
-            <option value="50">Todas</option>
-          </select>
         </div>
 
         {/* bloco supporte */}

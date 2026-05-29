@@ -32,17 +32,43 @@ function App() {
   // importantando o hook de localizacao
   const { coords, buscaLocalizacao, pesquisarEndereco } = Location();
 
+  // // Usamos useCallback para a função não ser recriada "do zero" toda hora (versão original, sem suporte a busca por texto)
+  // const fetchAPI = useCallback(async (lat = -23.5489, lon = -46.6388) => {
+  //   try {
+  //     const response = await axios.get("http://localhost:3000/oficinas", {
+  //       params: { lat, lon, raio: 20 },
+  //     });
+  //     setOficinas(response.data.output_consulta);
+  //   } catch (erro) {
+  //     console.error("Erro ao buscar oficinas: ", erro);
+  //   }
+  // }, []); // Array vazio aqui indica que a função é estável
+
   // Usamos useCallback para a função não ser recriada "do zero" toda hora
-  const fetchAPI = useCallback(async (lat = -23.5489, lon = -46.6388) => {
-    try {
-      const response = await axios.get("http://localhost:3000/oficinas", {
-        params: { lat, lon, raio: 20 },
-      });
-      setOficinas(response.data.output_consulta);
-    } catch (erro) {
-      console.error("Erro ao buscar oficinas: ", erro);
-    }
-  }, []); // Array vazio aqui indica que a função é estável
+  // Agora aceita q (termo de busca) para enviar ao Elasticsearch via backend
+  const fetchAPI = useCallback(
+    async (lat = -23.5489, lon = -46.6388, q = "") => {
+      try {
+        const response = await axios.get("http://localhost:3000/oficinas", {
+          params: { lat, lon, raio: 20, ...(q ? { q } : {}) },
+        });
+        setOficinas(response.data.output_consulta);
+      } catch (erro) {
+        console.error("Erro ao buscar oficinas: ", erro);
+      }
+    },
+    [],
+  ); // Array vazio aqui indica que a função é estável
+
+  // Chamada pela caixa de busca em Oficinas.jsx — envia o termo para o Elasticsearch
+  const handleBuscar = useCallback(
+    (termo) => {
+      const lat = coords?.lat ?? -23.5489;
+      const lon = coords?.lon ?? -46.6388;
+      fetchAPI(lat, lon, termo);
+    },
+    [coords, fetchAPI],
+  );
 
   // fetch inicial, para popular a home com as oficinais mais proximas das coordenadas iniciais.
   useEffect(() => {
@@ -59,7 +85,6 @@ function App() {
   // Dentro do App.jsx, crie esta função específica para o arraste
   const handleArrasteMapa = useCallback(
     async (lat, lon) => {
-      // 1. Opcional: Se o seu hook Location permitir, você pode atualizar o centro global aqui
       // Isso ajuda a manter a sincronia entre os componentes
       // setCoords({ lat, lon });
 
@@ -124,6 +149,7 @@ function App() {
               setQuantidadeLimite={setQuantidadeLimite}
               mapaEspecialidades={MAPA_ESPECIALIDADES} // mandando o mapeamento das especialidades para a pag de oficinas
               mapaMarcas={MAPA_MARCAS}
+              onBuscar={handleBuscar} // envia o termo de busca para o Elasticsearch via backend
             />
           }
         />
@@ -143,7 +169,13 @@ function App() {
         <Route path="/perfil" element={<Perfil />} />
         <Route
           path="/oficinas/cadastrar"
-          element={user ? <CadastrarOficina /> : <Navigate to="/login" />}
+          element={
+            user ? (
+              <CadastrarOficina mapaEspecialidades={MAPA_ESPECIALIDADES} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
         />
 
         {/* NOVA ROTA - UC04 */}
