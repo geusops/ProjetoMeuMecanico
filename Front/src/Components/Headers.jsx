@@ -51,13 +51,15 @@ export default function Headers() {
 
             {/* Menu principal para telas grandes */}
             <ul className="hidden md:flex items-center gap-6 text-gray-600 text-md">
-              <li className="hover:text-sky-500 transition">
+              <li className="hover:text-sky-500 transition text-lg">
                 <Link to="/home">Início</Link>
               </li>
-              <li className="hover:text-sky-500 transition">
+              <li className="hover:text-sky-500 transition text-lg">
                 <Link to="/oficinas">Oficinas</Link>
               </li>
-              <li className="hover:text-sky-500 transition">Contato</li>
+              <li className="hover:text-sky-500 transition text-lg">
+                <Link to="/sobre">Sobre nós</Link>
+              </li>
             </ul>
           </div>
 
