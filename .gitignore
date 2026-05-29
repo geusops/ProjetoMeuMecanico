@@ -1,5 +1,12 @@
-
+# Dependências
 node_modules/
+Backend/node_modules/
+Front/node_modules/
 
+# Ambiente
 .env
+*.log
 
+# Outros
+.DS_Store
+Thumbs.db
