@@ -265,19 +265,18 @@ app.post("/oficinas", (req, res) => {
 
   // Vincula o ID do usuário na tabela intermediária 'mecanicos'
   // O "INSERT IGNORE" garante que se ele cadastrar uma segunda oficina no futuro, não dará erro de duplicidade
-  const usuarioParaMecanico = `
-    INSERT INTO mecanicos (id_usuario)
-    VALUES (?)
-  `;
+   const usuarioParaMecanico = `
+     INSERT IGNORE INTO mecanicos (id_usuario)
+     VALUES (?)
+   `;
 
   // verifica se o usuário já possui perfil de mecânico
-  const buscaMecanico = `
-    SELECT id_mecanico
-    FROM mecanicos
-    WHERE id_usuario = ?
-  `;
-
-  // função responsável por criar a oficina após obter o id_mecanico real
+     const buscaMecanico = `
+     SELECT id_mecanico
+     FROM mecanicos
+     WHERE id_usuario = ?
+   `;
+ 
   // função responsável por criar a oficina após obter o id_mecanico real
   const criarOficina = (idMecanicoReal) => {
     // Atualiza o tipo do usuário para mecânico
