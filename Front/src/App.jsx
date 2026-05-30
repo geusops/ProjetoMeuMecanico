@@ -1,5 +1,3 @@
-//Modificado por Khenny
-
 //Importando as paginas
 import Headers from "./Components/Headers";
 import Footer from "./Components/Footer";
@@ -11,6 +9,9 @@ import CadastrarUsuario from "./Pages/CadastrarUsuário";
 import Perfil from "./Pages/Perfil";
 import CadastrarOficina from "./Pages/CadastrarOficina";
 import Admin from "./Pages/Admin";
+import Sobre from "./Pages/SobreNos";
+
+//demais imports
 import { Routes, Route } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react"; //conexao com a API node
 import axios from "axios"; //conexao com a API node
@@ -31,18 +32,6 @@ function App() {
 
   // importantando o hook de localizacao
   const { coords, buscaLocalizacao, pesquisarEndereco } = Location();
-
-  // // Usamos useCallback para a função não ser recriada "do zero" toda hora (versão original, sem suporte a busca por texto)
-  // const fetchAPI = useCallback(async (lat = -23.5489, lon = -46.6388) => {
-  //   try {
-  //     const response = await axios.get("http://localhost:3000/oficinas", {
-  //       params: { lat, lon, raio: 20 },
-  //     });
-  //     setOficinas(response.data.output_consulta);
-  //   } catch (erro) {
-  //     console.error("Erro ao buscar oficinas: ", erro);
-  //   }
-  // }, []); // Array vazio aqui indica que a função é estável
 
   // Usamos useCallback para a função não ser recriada "do zero" toda hora
   // Agora aceita q (termo de busca) para enviar ao Elasticsearch via backend
@@ -181,6 +170,7 @@ function App() {
         {/* NOVA ROTA - UC04 */}
         <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<h1>404 - Página não encontrada</h1>} />
+        <Route path="/sobre" element={<Sobre />} />
       </Routes>
       <Footer />
     </>
