@@ -9,7 +9,7 @@ import {
 import { Link } from "react-router-dom";
 
 // Khenny filtros de busca aprimorada com Claude.IA
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 function Oficinas(props) {
   // filtros - adicionado por Khenny
@@ -53,18 +53,9 @@ function Oficinas(props) {
     }
   };
 
-  // Debounce: aguarda 300ms após o usuário parar de digitar para chamar o Elasticsearch via backend
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      props.onBuscar(busca);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [busca]);
-
   // logica do filtro
   const oficinasFiltradas = props.oficinas.filter((oficina) => {
-    // passaBusca comentado — a busca por texto agora é feita no Elasticsearch (backend)
-    // const passaBusca = oficina.nome.toLowerCase().includes(busca.toLowerCase());
+    const passaBusca = oficina.nome.toLowerCase().includes(busca.toLowerCase());
     //avaliacao
     const passaAvaliacao =
       !oficina.avaliacao || oficina.avaliacao >= avaliacaoMinima;
@@ -90,8 +81,8 @@ function Oficinas(props) {
     const passaBairro =
       !bairroSelecionado || oficina.bairro === bairroSelecionado;
 
-    // passaBusca removido do filtro local — agora é tratado pelo Elasticsearch no backend
     return (
+      passaBusca &&
       passaAvaliacao &&
       passaServico &&
       passaMarca &&

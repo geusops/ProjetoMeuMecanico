@@ -8,13 +8,10 @@ import {
 } from "lucide-react";
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { NavLink, Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function CadastrarOficina({ mapaEspecialidades }) {
-  // checa qual botao esta ativo
-  const [ativo, setAtivo] = useState("minha_oficina"); // Estado do endereço (CEP, rua, etc)
-
   // ref aos checkboxes de marcas
   const [marcas, setMarcas] = useState([]);
 

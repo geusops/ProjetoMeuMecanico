@@ -21,7 +21,6 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import TextField from "@mui/material/TextField";
 
 //funcao pra renderizar os cards de serviços da oficina
 export function ServiceCard({ titulo, descricao, preco }) {
@@ -101,10 +100,10 @@ function DetalhesOficina({ dados, mapaEspecialidades, mapaMarcas }) {
         comentario,
         data: new Date().toISOString().split("T")[0],
       });
-      setMensagemAvaliacao("✅ Avaliação enviada com sucesso!");
+      setMensagemAvaliacao("Avaliação enviada com sucesso!");
       setMostrarForm(false);
     } catch (error) {
-      setMensagemAvaliacao("❌ Erro ao enviar avaliação.");
+      setMensagemAvaliacao("Erro ao enviar avaliação.");
       console.error(error);
     }
   };

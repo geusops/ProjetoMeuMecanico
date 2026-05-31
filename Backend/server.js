@@ -6,14 +6,10 @@ import path from "path";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { Client as ESClient } from "@elastic/elasticsearch";
-import { syncSingleOficina } from "./es-sync.js";
 
 dotenv.config();
 
 const app = express();
-
-const esClient = new ESClient({ node: "http://localhost:9200" });
 
 //usado pra ter a capacidade de receber objetos json
 app.use(express.json());
@@ -47,70 +43,13 @@ con.connect(function (err) {
   });
 });
 
-// Versão com Elasticsearch - quando q está presente usa ES; sem q mantém MySQL geo-distância
-app.get("/oficinas", async (req, res) => {
-  const { lat, lon, raio, q } = req.query;
+app.get("/oficinas", (req, res) => {
+  const { lat, lon, raio } = req.query;
 
   const userLat = parseFloat(lat);
   const userLon = parseFloat(lon);
   const searchRaio = parseFloat(raio) || 10;
 
-  // Com termo de busca: usa Elasticsearch com multi_match + analyzer português
-  if (q && q.trim()) {
-    try {
-      const filtroGeo =
-        !isNaN(userLat) && !isNaN(userLon)
-          ? [
-              {
-                geo_distance: {
-                  distance: `${searchRaio}km`,
-                  location: { lat: userLat, lon: userLon },
-                },
-              },
-            ]
-          : [];
-
-      const resultado = await esClient.search({
-        index: "oficinas",
-        size: 50,
-        query: {
-          bool: {
-            must: {
-              multi_match: {
-                query: q,
-                fields: ["nome^2", "especialidade", "marcas", "endereco"],
-                fuzziness: "AUTO",
-              },
-            },
-            filter: filtroGeo,
-          },
-        },
-        sort: filtroGeo.length
-          ? [
-              {
-                _geo_distance: {
-                  location: { lat: userLat, lon: userLon },
-                  order: "asc",
-                  unit: "km",
-                },
-              },
-            ]
-          : ["_score"],
-      });
-
-      const output_consulta = resultado.hits.hits.map((hit) => ({
-        ...hit._source,
-        distancia_km: hit.sort?.[0] ?? null,
-      }));
-
-      return res.json({ output_consulta });
-    } catch (err) {
-      console.error("Erro na busca ES:", err);
-      return res.status(500).json({ error: "Erro na busca Elasticsearch" });
-    }
-  }
-
-  // Sem termo de busca: mantém a busca geográfica via MySQL
   //nessa funcao, a longitude vem antes da latitude o que é padrao do MySQL.
   const sql = `
     SELECT
@@ -266,7 +205,7 @@ app.post("/oficinas", (req, res) => {
   // Vincula o ID do usuário na tabela intermediária 'mecanicos'
   // O "INSERT IGNORE" garante que se ele cadastrar uma segunda oficina no futuro, não dará erro de duplicidade
   const usuarioParaMecanico = `
-    INSERT INTO mecanicos (id_usuario)
+    INSERT IGNORE INTO mecanicos (id_usuario)
     VALUES (?)
   `;
 
@@ -277,7 +216,6 @@ app.post("/oficinas", (req, res) => {
     WHERE id_usuario = ?
   `;
 
-  // função responsável por criar a oficina após obter o id_mecanico real
   // função responsável por criar a oficina após obter o id_mecanico real
   const criarOficina = (idMecanicoReal) => {
     // Atualiza o tipo do usuário para mecânico
@@ -300,7 +238,6 @@ app.post("/oficinas", (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    // Callback alterado para 'async' para permitir o uso de 'await syncSingleOficina'
     con.query(
       sql,
       [
@@ -319,7 +256,7 @@ app.post("/oficinas", (req, res) => {
         req.body.cidade,
         req.body.bairro,
       ],
-      async (err, result) => {
+      (err, result) => {
         if (err) {
           console.error("❌ Erro ao cadastrar oficina:", err);
           return res
@@ -330,23 +267,6 @@ app.post("/oficinas", (req, res) => {
         const idOficina = result.insertId;
         console.log("✅ Oficina cadastrada com ID:", idOficina);
 
-        // Objeto formatado para o Elasticsearch
-        const dadosParaElastic = {
-          id_oficina: idOficina,
-          nome,
-          endereco,
-          especialidade,
-          marcas,
-          telefone,
-          email,
-          avaliacao: 0,
-          foto_path,
-          id_mecanico: idMecanicoReal,
-          latitude_oficina,
-          longitude_oficina,
-        };
-
-        // Verificação de serviços
         if (Array.isArray(servicos) && servicos.length > 0) {
           const sqlServicos = `
             INSERT INTO servicos (nome_servico, descricao, preco_medio, id_oficina)
@@ -360,7 +280,7 @@ app.post("/oficinas", (req, res) => {
             idOficina,
           ]);
 
-          con.query(sqlServicos, [valoresServicos], async (errServicos) => {
+          con.query(sqlServicos, [valoresServicos], (errServicos) => {
             if (errServicos) {
               console.error("❌ Erro ao cadastrar serviços:", errServicos);
               return res
@@ -368,29 +288,11 @@ app.post("/oficinas", (req, res) => {
                 .json({ error: "Erro ao salvar serviços." });
             }
 
-            // Sincronização com Elasticsearch
-            try {
-              await syncSingleOficina(dadosParaElastic);
-            } catch (esError) {
-              console.error(
-                "⚠️ Falha ao indexar no ES, mas dados salvos no MySQL.",
-              );
-            }
-
             res
               .status(201)
               .json({ message: "Oficina e serviços salvos!", id: idOficina });
           });
         } else {
-          // Sincronização com Elasticsearch (caso sem serviços)
-          try {
-            await syncSingleOficina(dadosParaElastic);
-          } catch (esError) {
-            console.error(
-              "⚠️ Falha ao indexar no ES, mas dados salvos no MySQL.",
-            );
-          }
-
           res
             .status(201)
             .json({ message: "Oficina salva sem serviços.", id: idOficina });
