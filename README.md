@@ -12,13 +12,13 @@ O **Meu Mecânico** é uma plataforma web full-stack que permite aos motoristas 
 
 ### Tecnologias Utilizadas
 
-| Camada         | Tecnologias                                          |
-| -------------- | ---------------------------------------------------- |
-| Frontend       | React + Vite + React Router + Tailwind CSS + Leaflet |
-| Backend        | Node.js + Express                                    |
-| Banco de Dados | MySQL (MariaDB via XAMPP)                            |
-| Autenticação   | JWT + bcrypt                                         |
-| Outros         | Axios, Lucide React, OpenStreetMap, ViaCEP           |
+| Camada | Tecnologias |
+|--------|------------|
+| Frontend | React + Vite + React Router + Tailwind CSS + Leaflet |
+| Backend | Node.js + Express |
+| Banco de Dados | MySQL (MariaDB via XAMPP) |
+| Autenticação | JWT + bcrypt |
+| Outros | Axios, Lucide React, OpenStreetMap, ViaCEP |
 
 ---
 
@@ -37,7 +37,7 @@ O **Meu Mecânico** é uma plataforma web full-stack que permite aos motoristas 
 #### Via GUI (SGBD de sua preferência)
 
 Para a criação do usuário, siga as instruções no arquivo `Database/MySQL/create_user.sql`.
-Para a criação do banco de dados, use o arquivo `Database/MySQL/Meu_Mecanico_dump.sql` para importar as estruturas e dados do banco.
+Para a criação do banco de dados, use o arquivo `Database/MySQL/meu_mecanico.sql` ou `Database/MySQL/Meu_Mecanico_dump.sql` para importar as estruturas e dados do banco.
 
 #### Via linha de comando
 
@@ -116,11 +116,11 @@ ProjetoMeuMecanico/
 
 ## 🔑 Usuários de Teste
 
-| Tipo     | Email                    | Senha    |
-| -------- | ------------------------ | -------- |
-| Admin    | admin@meumecanico.com    | password |
-| Cliente  | cliente@meumecanico.com  | hash123  |
-| Mecânico | saojorge@meumecanico.com | hash123  |
+| Tipo | Email | Senha |
+|------|-------|-------|
+| Admin | admin@meumecanico.com | password |
+| Cliente | cliente@meumecanico.com | hash123 |
+| Mecânico | saojorge@meumecanico.com | hash123 |
 
 ---
 
@@ -146,11 +146,11 @@ ProjetoMeuMecanico/
 
 ---
 
-_Desenvolvido em 2026 — São Paulo, SP_
+*Desenvolvido em 2026 — São Paulo, SP*
 
 ## Referências
 
-- [Como fazer um README.md BONITÃO](https://raullesteves.medium.com/github-como-fazer-um-readme-md-bonit%C3%A3o-c85c8f154f8) — Artigo de Raul Esteves no Medium.
+* [Como fazer um README.md BONITÃO](https://raullesteves.medium.com/github-como-fazer-um-readme-md-bonit%C3%A3o-c85c8f154f8) — Artigo de Raul Esteves no Medium.
 
 NPM. package.json. npm Docs, 2026. Disponível em: <https://docs.npmjs.com/cli/v11/configuring-npm/package-json>. Acesso em: 14 mai. 2026.
 
