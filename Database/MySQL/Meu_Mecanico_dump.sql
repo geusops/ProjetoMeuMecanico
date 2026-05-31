@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 31/05/2026 às 06:40
+-- Tempo de geração: 01/06/2026 às 01:42
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -46,6 +46,15 @@ CREATE TABLE `avaliacoes` (
   `data` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Despejando dados para a tabela `avaliacoes`
+--
+
+INSERT INTO `avaliacoes` (`id_avaliacao`, `id_cliente`, `id_oficina`, `nota`, `comentario`, `data`) VALUES
+(21, 30, 33, 5, 'Bom', '2026-05-31'),
+(22, 30, 33, 5, 'Bom', '2026-05-31'),
+(23, 30, 33, 5, 'Bom', '2026-05-31');
+
 -- --------------------------------------------------------
 
 --
@@ -64,8 +73,12 @@ CREATE TABLE `clientes` (
 
 INSERT INTO `clientes` (`id_cliente`, `telefone`, `endereco`) VALUES
 (5, '(11) 98888-7777', 'São Paulo - SP'),
+(8, NULL, NULL),
+(9, NULL, NULL),
+(10, NULL, NULL),
 (11, NULL, NULL),
-(12, NULL, NULL);
+(12, NULL, NULL),
+(30, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -438,7 +451,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de tabela `avaliacoes`
 --
 ALTER TABLE `avaliacoes`
-  MODIFY `id_avaliacao` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id_avaliacao` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT de tabela `mecanicos`
