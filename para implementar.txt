@@ -1,3 +1,0 @@
-- Implementar o Google Oauth
-- Infinite Scrolling react
-- Organizar rotas
